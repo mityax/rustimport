@@ -1,0 +1,14 @@
+*.swp
+*.pyc
+*.so
+*.cppimporthash
+.rendered.*
+__pycache__
+build
+cppimport.egg-info
+dist
+.cache
+.tox
+.mypy_cache/
+.coverage
+htmlcov

@@ -1,0 +1,21 @@
+PUBLISH TO PYPI:
+update the version number in VERSION with calver: yy.mm.dd
+python setup.py sdist upload -r pypi
+
+SANITY TEST: 
+open new terminal
+mamba create -n testenv python=3 pip
+conda activate testenv
+pip install cppimport
+cd tests
+python -c 'import cppimport; assert(cppimport.imp("mymodule").add(1,2) == 3);'
+
+GIT:
+git commit -m "yy.mm.dd" 
+git push
+git tag yy.mm.dd
+git push origin yy.mm.dd
+create release on github
+
+TODO: 
+automate most of this via github actions
