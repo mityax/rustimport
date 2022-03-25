@@ -1,101 +1,83 @@
-# cppimport - Import C++ directly from Python! 
+# rustimport - Import Rust directly from Python! 
 
 <p align=center>
     <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.6-green.svg"></a>
-    <a target="_blank" href="https://pypi.org/project/cppimport/" title="PyPI version"><img src="https://img.shields.io/pypi/v/cppimport?logo=pypi"></a>
-    <a target="_blank" href="https://pypi.org/project/cppimport/" title="PyPI"><img src="https://img.shields.io/pypi/dm/cppimport"></a>
-    <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
-    <a target="_blank" href="https://github.com/tbenthompson/cppimport/actions" title="Test Status"><img src="https://github.com/tbenthompson/cppimport/actions/workflows/test.yml/badge.svg"></a>
-    <a target="_blank" href="https://codecov.io/gh/tbenthompson/cppimport" title="Code coverage"><img src="https://codecov.io/gh/tbenthompson/cppimport/branch/stable/graph/badge.svg?token=GWpX62xMt5"/></a>
-</a>
-
+    <!--<a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI version"><img src="https://img.shields.io/pypi/v/rustimport?logo=pypi"></a>
+    <a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI"><img src="https://img.shields.io/pypi/dm/rustimport"></a>-->
+    <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a></a>
 </p>
 
-## Contributing and architecture
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on the internals of `cppimport` and how to get involved in development.
+rustimport was heavily inspired by and is partly based upon [cppimport](https://github.com/tbenthompson/cppimport). Check it out if you're interested in the same functionality for C and C++!
 
 ## Installation
 
-Install with `pip install cppimport`.
+Install with `pip install rustimport`.
 
 ## A quick example
 
-Save the C++ code below as `somecode.cpp`.
-```c++
-// cppimport
-#include <pybind11/pybind11.h>
+Save the Rust code below as `somecode.rs`.
+```rust
+// rustimport:pyo3
 
-namespace py = pybind11;
+use pyo3::prelude::*;
 
-int square(int x) {
-    return x * x;
+#[pyfunction]
+fn square(x: i32) -> PyResult<i32> {
+    Ok(x * x);
 }
 
-PYBIND11_MODULE(somecode, m) {
-    m.def("square", &square);
+
+#[pymodule]
+fn somecode(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(square, m)?)?;
+    Ok(())
 }
-/*
-<%
-setup_pybind11(cfg)
-%>
-*/
 ```
 
-Then open a Python interpreter and import the C++ extension:
+Then open a Python interpreter and import the Rust extension:
 
 ```python
->> > import rustimport.import_hook
->> > import somecode  # This will pause for a moment to compile the module
->> > somecode.square(9)
+>>> import rustimport.import_hook
+>>> import somecode  # This will pause for a moment to compile the module
+>>> somecode.square(9)
 81
 ```
 
-Hurray, you've called some C++ code from Python using a combination of `cppimport` and [`pybind11`](https://github.com/pybind/pybind11).  
+Hurray, you've called some Rust code from Python using a combination of `rustimport` and [`pyo3`](https://github.com/PyO3/pyo3)
 
-I'm a big fan of the workflow that this enables, where you can edit both C++ files and Python and recompilation happens transparently! It's also handy for quickly whipping together an optimized version of a slow Python function.
+This workflow enables you to edit both Rust files and Python and recompilation happens automatically and transparently! It's also handy for quickly whipping together an optimized version of a slow Python function.
 
 ## An explanation 
 
-Okay, now that I've hopefully convinced you on how exciting this is, let's get into the details of how to do this yourself. First, the comment at top is essential to opt in to cppimport. Don't forget this! (See below for an explanation of why this is necessary.)
-```c++
-// cppimport
+Okay, now that I've hopefully convinced you on how exciting this is, let's get into the details of how to do this yourself. First, the comment at top is essential to opt in to rustimport. Don't forget this! (See below for an explanation of why this is necessary.)
+```rust
+// rustimport:pyo3
 ```
 
-The bulk of the file is a generic, simple [pybind11](https://github.com/pybind/pybind11) extension. We include the `pybind11` headers, then define a simple function that squares `x`, then export that function as part of a Python extension called `somecode`.
-
-Finally at the end of the file, there's a section I'll call the "configuration block":
-```
-<%
-setup_pybind11(cfg)
-%>
-```
-This region surrounded by `<%` and `%>` is a [Mako](https://www.makotemplates.org/) code block. The region is evaluated as Python code during the build process and provides configuration info like compiler and linker flags to the cppimport build system. 
-
-Note that because of the Mako pre-processing, the comments around the configuration block may be omitted.  Putting the configuration block at the end of the file, while optional, ensures that line numbers remain correct in compilation error messages.
+The bulk of the file is a generic, simple [pyo3](https://github.com/PyO3/pyo3) extension. We use the `pyo3` crate, then define a simple function that squares `x`, then export that function as part of a Python extension called `somecode`.
 
 ## Building for production
-In production deployments you usually don't want to include a c/c++ compiler, all the sources and compile at runtime. Therefore, a simple cli utility for pre-compiling all source files is provided. This utility may, for example, be used in CI/CD pipelines. 
+In production deployments you usually don't want to include the Rust toolchain, all the sources and compile at runtime. Therefore, a simple cli utility for pre-compiling all source files is provided. This utility may, for example, be used in CI/CD pipelines. 
 
 Usage is as simple as
 
 ```commandline
-python -m cppimport build
+python -m rustimport build
 ```
 
-This will build all `*.c` and `*.cpp` files in the current directory (and it's subdirectories) if they are eligible to be imported (i.e. contain the `// cppimport` comment in the first line).
+This will build all `*.rs` files and Rust crates in the current directory (and it's subdirectories) if they are eligible to be imported (i.e. contain the `// rustimport` comment in the first line or a `.rustimport` file in case of a crate).
 
 Alternatively, you may specifiy one or more root directories or source files to be built:
 
 ```commandline
-python -m cppimport build ./my/directory/ ./my/single/file.cpp
+python -m rustimport build ./my/root/folder/ ./my/single/file.rs ./my/crate/
 ```
-_Note: When specifying a path to a file, the header check (`// cppimport`) is skipped for that file._
+_Note: When specifying a path to a file, the header check (`// rustimport`) is skipped for that file._
 
 ### Fine-tuning for production
-To further improve startup performance for production builds, you can opt-in to skip the checksum and compiled binary existence checks during importing by either setting the environment variable `CPPIMPORT_RELEASE_MODE` to `true` or setting the configuration from within Python:
+To further improve startup performance for production builds, you can opt-in to skip the checksum and compiled binary existence checks during importing by either setting the environment variable `RUSTIMPORT_RELEASE_MODE` to `true` or setting the configuration from within Python:
 ```python
-cppimport.settings['release_mode'] = True
+rustimport.settings.release_mode = True
 ```
 **Warning:** Make sure to have all binaries pre-compiled when in release mode, as importing any missing ones will cause exceptions. 
 
@@ -103,94 +85,66 @@ cppimport.settings['release_mode'] = True
 
 ### What's actually going on?
 
-Sometimes Python just isn't fast enough. Or you have existing code in a C or C++ library. So, you write a Python *extension module*, a library of compiled code. I recommend [pybind11](https://github.com/pybind/pybind11) for C++ to Python bindings or [cffi](https://cffi.readthedocs.io/en/latest/) for C to Python bindings. I've done this a lot over the years. But, I discovered that my productivity is slower when my development process goes from *Edit -> Test* in just Python to *Edit -> Compile -> Test* in Python plus C++. So, `cppimport` combines the process of compiling and importing an extension in Python so that you can just run `import foobar` and not have to worry about multiple steps. Internally, `cppimport` looks for a file `foobar.cpp`. Assuming one is found, it's run through the Mako templating system to gather compiler options, then it's compiled and loaded as an extension module.
+Sometimes Python just isn't fast enough. Or you have existing code in a Rust crate. So, you write a Python *extension module*, a library of compiled code. I recommend [pyo3](https://github.com/PyO3/pyo3) for Rust to Python bindings.
 
-### Does cppimport recompile every time a module is imported? 
-No! Compilation should only happen the first time the module is imported. The C++ source is compared with a checksum on each import to determine if any relevant file has changed. Additional dependencies (e.g. header files!) can be tracked by adding to the Mako header:
-```python
-cfg['dependencies'] = ['file1.h', 'file2.h']
-```
-The checksum is computed by simply appending the contents of the extension C++ file together with the files in `cfg['sources']` and `cfg['dependencies']`. 
+I discovered that my productivity is slower when my development process goes from *Edit -> Test* in just Python to *Edit -> Compile -> Test* in Python plus Rust. So, `rustimport` combines the process of compiling and importing an extension in Python so that you can just run `import foobar` and not have to worry about multiple steps. Internally, `rustimport` looks for a file `foobar.rs` or a Rust crate (discovered through "foobar/Cargo.toml"). Assuming one is found, the comments at it's beginning are parsed for either a template (`rustimport:pyo3`) or a cargo manifest, then it's compiled and loaded as an extension module.
 
-### How can I set compiler or linker args?
-
-Standard distutils configuration options are valid:
+### Does rustimport recompile every time a module is imported? 
+No! Compilation should only happen the first time the module is imported. The Rust source is compared with a checksum on each import to determine if any relevant file has changed. Additional dependencies can be tracked by adding to the header comments:
 
 ```python
-cfg['extra_link_args'] = ['...']
-cfg['extra_compile_args'] = ['...']
-cfg['libraries'] = ['...']
-cfg['include_dirs'] = ['...']
+//d: ../myothercrate/**/*.rs
+//d: ../myothercrate/Cargo.toml
 ```
 
-For example, to use C++11, add:
-```python
-cfg['extra_compile_args'] = ['-std=c++11']
-```
+By default, rustimport tracks all `*.rs` files as well as `Cargo.toml` and `Cargo.lock` for crates and no additional dependencies for single-file Rust extensions.
 
-### How can I split my extension across multiple source files?
-
-In the configuration block: 
-```python
-cfg['sources'] = ['extra_source1.cpp', 'extra_source2.cpp']
-```
-
-### cppimport isn't doing what I want, can I get more verbose output?
-`cppimport` uses the standard Python logging tools. Please add logging handlers to either the root logger or the `"cppimport"` logger. For example, to output all debug level log messages:
+### rustimport isn't doing what I want, can I get more verbose output?
+`rustimport` uses the standard Python logging tools. Thus, you can enable logging like this:
 
 ```python
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
-
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-root_logger.addHandler(handler)
+import logging
+logging.basicConfig(level=logging.DEBUG)  # or logging.INFO for a bit less verbosity
+# ... do some rustimport stuff here
 ```
 
 ### How can I force a rebuild even when the checksum matches?
 
 Set:
 ```python
-cppimport.settings['force_rebuild'] = True
+rustimport.settings.force_rebuild = True
 ```
 
-And if this is a common occurence, I would love to hear your use case and why the combination of the checksum, `cfg['dependencies']` and `cfg['sources']` is insufficient!
-
-### How can I get information about filepaths in the configuration block?
-The module name is available as the `fullname` variable and the C++ module file is available as `filepath`.
-For example,
-```
-<%
-module_dir = os.path.dirname(filepath)
-%>
-```
+And if this is a common occurence, I would love to hear your use case and why the normal dependency tracking is insufficient!
 
 ### How can I make compilation faster? 
 
-In single file extensions, this is a fundamental issue with C++. Heavily templated code is often quite slow to compile. 
+Compilation happens incrementally by default. That is, the first compilation might take a bit, but subsequent ones are usually much faster.
 
-If your extension has multiple source files using the `cfg['sources']` capability, then you might be hoping for some kind of incremental compilation. For the uninitiated, incremental compilation involves only recompiling those source files that have changed. Unfortunately this isn't possible because cppimport is built on top of the setuptools and distutils and these standard library components do not support incremental compilation. 
+rustimport uses a temporary directory for caching, which is deleted after a reboot on most systems. Therefore it might be beneficial for you to set a custom cache directory to have a more permanent cache:
 
-I recommend following the suggestions on [this SO answer](http://stackoverflow.com/questions/11013851/speeding-up-build-process-with-distutils). That is:
-
-1. Use `ccache` to reduce the cost of rebuilds
-2. Enable parallel compilation. This can be done with `cfg['parallel'] = True` in the C++ file's configuration header.
-
-As a further thought, if your extension has many source files and you're hoping to do incremental compiles, that probably indicates that you've outgrown `cppimport` and should consider using a more complete build system like CMake.
-
-### Why does the import hook need "cppimport" on the first line of the .cpp file?
-Modifying the Python import system is a global modification and thus affects all imports from any other package. As a result, when I first implemented `cppimport`, other packages (e.g. `scipy`) suddenly started breaking because import statements internal to those packages were importing C or C++ files instead of the modules they were intended to import. To avoid this failure mode, the import hook uses an "opt in" system where C and C++ files can specify they are meant to be used with cppimport by having a comment on the first line that includes the text "cppimport". 
-
-As an alternative to the import hook, you can use `imp` or `imp_from_filepath`. The `cppimport.imp` and `cppimport.imp_from_filepath` performs exactly the same operation as the import hook but in a slightly more explicit way:
+```python
+rustimport.settings.cache_dir = os.path.realpath("./.rust-cache")
 ```
-foobar = cppimport.imp("foobar")
-foobar = cppimport.imp_from_filepath("src/foobar.cpp")
+
+If this directory doesn't exist, it will be created automatically by rustimport.
+
+### Why does the import hook need "rustimport" on the first line of the .rs file?
+Modifying the Python import system is a global modification and thus affects all imports from any other package. As a result, when `cppimport` was first implemented, other packages (e.g. `scipy`) suddenly started breaking because import statements internal to those packages were importing C or C++ files instead of the modules they were intended to import. To avoid this failure mode, the import hook uses an "opt in" system where C and C++ files can specify they are meant to be used with cppimport by having a comment on the first line that includes the text "cppimport". 
+
+rustimport has adopted from this and follows the same pattern. Since rustimport also supports importing whole crates, an additional mechanism was necessary to make that work in the same fashion: You can either create a `.rustimport` file in the crate's root folder (next to `Cargo.toml`) or, alternatively, add a "# rustimport" comment to `Cargo.toml`s first line.
+
+As an alternative to the import hook, you can use `imp` or `imp_from_filepath`. The `rustimport.imp` and `rustimport.imp_from_filepath` performs exactly the same operation as the import hook but in a slightly more explicit way:
 ```
-By default, these explicit function do not require the "cppimport" keyword on the first line of the C++ source file. 
+foobar = rustimport.imp("foobar")
+foobar = rustimport.imp_from_filepath("./some/path/foobar.rs")
+mycrate = rustimport.imp_from_filepath("./mycrate/")
+```
+By default, these explicit function do not require the "rustimport" keyword on the first line of the .rs source file or the according marker in the crate. 
 
-### Windows?
-The CI system does not run on Windows. A PR would be welcome adding further Windows support. I've used `cppimport` with MinGW-w64 and Python 3.6 and had good success. I've also had reports that `cppimport` works on Windows with Python 3.6 and Visual C++ 2015 Build Tools. The main challenge is making sure that distutils is aware of your available compilers. Try out the suggestion [here](https://stackoverflow.com/questions/3297254/how-to-use-mingws-gcc-compiler-when-installing-python-package-using-pip).
+## Contributing and architecture
 
-## cppimport uses the MIT License
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on the internals of `rustimport` and how to get involved in development.
+
+## License
+rustimport uses the MIT License.
