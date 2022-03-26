@@ -117,8 +117,9 @@ For example, to add additional contents to the generated `Cargo.toml` file, use 
 
 use rand::Rng;
 
+#[pyfunction]
 fn myfunc() {
-    println!("{}", rand::thread_rng().gen_range(0..1))
+    println!("{}", rand::thread_rng().gen_range(0..10))
 }
 ```
 
