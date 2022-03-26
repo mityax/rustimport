@@ -25,13 +25,6 @@ use pyo3::prelude::*;
 fn square(x: i32) -> PyResult<i32> {
     Ok(x * x);
 }
-
-
-#[pymodule]
-fn somecode(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(square, m)?)?;
-    Ok(())
-}
 ```
 
 Then open a Python interpreter and import the Rust extension:
@@ -47,6 +40,25 @@ Hurray, you've called some Rust code from Python using a combination of `rustimp
 
 This workflow enables you to edit both Rust files and Python and recompilation happens automatically and transparently! It's also handy for quickly whipping together an optimized version of a slow Python function.
 
+To easily create a new single-file extension (like above), or a complete crate, use the provided tool:
+```bash
+$ python3 -m rustimport new my_single_file_extension.rs
+# or create a full rust crate:
+$ python3 -m rustimport new my_crate
+```
+
+And import it from Python:
+```python
+>>> import rustimport.import_hook
+>>> import my_single_file_extension, my_crate
+>>> my_single_file_extension.say_hello()
+Hello from my_single_file_extension, implemented in Rust!
+>>> my_crate.say_hello()
+Hello from my_crate, implemented in Rust!
+```
+
+Smooth!
+
 ## An explanation 
 
 Okay, now that I've hopefully convinced you on how exciting this is, let's get into the details of how to do this yourself. First, the comment at top is essential to opt in to rustimport. Don't forget this! (See below for an explanation of why this is necessary.)
@@ -54,7 +66,86 @@ Okay, now that I've hopefully convinced you on how exciting this is, let's get i
 // rustimport:pyo3
 ```
 
-The bulk of the file is a generic, simple [pyo3](https://github.com/PyO3/pyo3) extension. We use the `pyo3` crate, then define a simple function that squares `x`, then export that function as part of a Python extension called `somecode`.
+The bulk of the file is a generic, simple [pyo3](https://github.com/PyO3/pyo3) extension. We use the `pyo3` crate, then define a simple function that squares `x`, and rustimport takes care of exporting that function as part of a Python extension called `somecode`.
+
+## Templating & Pre-Processing
+
+rustimport offers several layers of customization. This is archieved through a simple pre-processor and templates (well, the only existing template at the moment is `pyo3` - pull requests welcome :D).
+
+### What rustimport did for you in the background
+The first example in this Readme is the simplest possible form of using rustimport. You just tell rustimport to use the `pyo3` template by writing `rustimport:pyo3` in the first line, and define a function annotated with `pyo3`'s `#[pyfunction]` macro. In the background, rustimport handled a lot of stuff for you:
+
+1. It set up a minimalistic folder structure for a rust crate with your source code in a temporary location.
+2. It generated a Cargo.toml file with the basic configuration for pyo3 and your extension:
+```toml
+[package]
+name = "somecode"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "somecode"
+crate-type = [ "cdylib",]
+
+[dependencies.pyo3]
+version = "0.16.2"
+features = [ "extension-module",]
+```
+2. It generated a code block exporting your method and appended it to the end of your file:
+```rust
+#[pymodule]
+fn minimal(_py: Python, m: &PyModule) -> PyResult<()> {
+  m.add_function(wrap_pyfunction!(say_hello, m)?)?;
+  Ok(())
+}
+```
+
+### Customizing an extension
+You can do all the above yourself. rustimport will detect that and only fill in the missing parts to make your extension work.
+
+#### 1. Extending `Cargo.toml`
+For example, to add additional contents to the generated `Cargo.toml` file, use the special `//:` comment syntax at the top of your `.rs` file:
+```rust
+// rustimport:pyo3
+
+// Set the library's version and add a dependency:
+//: [package]
+//: version = "1.2.3"
+//:
+//: [dependencies]
+//: rand = "0.8.5"
+
+use rand::Rng;
+
+fn myfunc() {
+    println!("{}", rand::thread_rng().gen_range(0..1))
+}
+```
+
+#### 2.Tracking additional source files
+To track additional files for changes, use the special `//d:` comment syntax:
+```rust
+//d: ../other-folder/somefile.rs
+//d: ../*.rs
+//d: ./my-directory/**/*.json
+
+// --snip--
+```
+rustimport will now track files matching these patterns too and re-compiles your extension if any of them changes.
+
+#### 3. Full customization for more control
+If you write a more complex extension, it's preferrable to just create a normal Rust crate:
+```bash
+$ python3 -m rustimport new my_crate
+$ tree my_crate
+my_crate
+├── Cargo.toml
+├── .rustimport
+└── src
+    └── lib.rs
+```
+
+The crate contains all necessary configuration to be directly be imported by rustimport and also some additional explanations on how to configure manually.
 
 ## Building for production
 In production deployments you usually don't want to include the Rust toolchain, all the sources and compile at runtime. Therefore, a simple cli utility for pre-compiling all source files is provided. This utility may, for example, be used in CI/CD pipelines. 
@@ -62,7 +153,7 @@ In production deployments you usually don't want to include the Rust toolchain, 
 Usage is as simple as
 
 ```commandline
-python -m rustimport build
+python -m rustimport build --release
 ```
 
 This will build all `*.rs` files and Rust crates in the current directory (and it's subdirectories) if they are eligible to be imported (i.e. contain the `// rustimport` comment in the first line or a `.rustimport` file in case of a crate).
@@ -70,7 +161,7 @@ This will build all `*.rs` files and Rust crates in the current directory (and i
 Alternatively, you may specifiy one or more root directories or source files to be built:
 
 ```commandline
-python -m rustimport build ./my/root/folder/ ./my/single/file.rs ./my/crate/
+python -m rustimport build --release ./my/root/folder/ ./my/single/file.rs ./my/crate/
 ```
 _Note: When specifying a path to a file, the header check (`// rustimport`) is skipped for that file._
 
@@ -79,6 +170,8 @@ To further improve startup performance for production builds, you can opt-in to 
 ```python
 rustimport.settings.release_mode = True
 ```
+This essentially just disables the import hook and uses the standard python utilities to import the pre-compiled binary.
+
 **Warning:** Make sure to have all binaries pre-compiled when in release mode, as importing any missing ones will cause exceptions. 
 
 ## Frequently asked questions
@@ -114,8 +207,9 @@ Set:
 ```python
 rustimport.settings.force_rebuild = True
 ```
+Or set the environment variable `RUSTIMPORT_FORCE_REBUILD` to `true`
 
-And if this is a common occurence, I would love to hear your use case and why the normal dependency tracking is insufficient!
+And if this is a common occurrence, I would love to hear your use case and why the normal dependency tracking is insufficient!
 
 ### How can I make compilation faster? 
 
@@ -126,19 +220,20 @@ rustimport uses a temporary directory for caching, which is deleted after a rebo
 ```python
 rustimport.settings.cache_dir = os.path.realpath("./.rust-cache")
 ```
+Or - you guessed it - use the `RUSTIMPORT_CACHE_DIR` environment variable.
 
 If this directory doesn't exist, it will be created automatically by rustimport.
 
 ### Why does the import hook need "rustimport" on the first line of the .rs file?
 Modifying the Python import system is a global modification and thus affects all imports from any other package. As a result, when `cppimport` was first implemented, other packages (e.g. `scipy`) suddenly started breaking because import statements internal to those packages were importing C or C++ files instead of the modules they were intended to import. To avoid this failure mode, the import hook uses an "opt in" system where C and C++ files can specify they are meant to be used with cppimport by having a comment on the first line that includes the text "cppimport". 
 
-rustimport has adopted from this and follows the same pattern. Since rustimport also supports importing whole crates, an additional mechanism was necessary to make that work in the same fashion: You can either create a `.rustimport` file in the crate's root folder (next to `Cargo.toml`) or, alternatively, add a "# rustimport" comment to `Cargo.toml`s first line.
+rustimport has adopted from this and follows the same pattern. Since rustimport also supports importing whole crates, an additional mechanism was necessary to make that work in the same fashion: You can either create a `.rustimport` file in the crate's root folder (next to `Cargo.toml`) or, alternatively, add a `# rustimport` comment to `Cargo.toml`s first line.
 
-As an alternative to the import hook, you can use `imp` or `imp_from_filepath`. The `rustimport.imp` and `rustimport.imp_from_filepath` performs exactly the same operation as the import hook but in a slightly more explicit way:
-```
+As an alternative to the import hook, you can use `imp` or `imp_from_path`. The `rustimport.imp` and `rustimport.imp_from_path` performs exactly the same operation as the import hook but in a slightly more explicit way:
+```python
 foobar = rustimport.imp("foobar")
-foobar = rustimport.imp_from_filepath("./some/path/foobar.rs")
-mycrate = rustimport.imp_from_filepath("./mycrate/")
+foobar = rustimport.imp_from_path("./some/path/foobar.rs")
+mycrate = rustimport.imp_from_path("./mycrate/")
 ```
 By default, these explicit function do not require the "rustimport" keyword on the first line of the .rs source file or the according marker in the crate. 
 

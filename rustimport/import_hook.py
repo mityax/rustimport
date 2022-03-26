@@ -6,7 +6,6 @@ import types
 from importlib.machinery import ModuleSpec
 from typing import Sequence, Optional
 
-import rustimport
 from rustimport import settings
 from rustimport.find import find_module_importable
 from rustimport.importable import Importable
@@ -45,10 +44,11 @@ class Loader(importlib.abc.Loader):
         self.__importable = importable
 
     def load_module(self, fullname: str) -> types.ModuleType:
-        if settings.force_rebuild or self.__importable.needs_rebuild:
+        if settings.force_rebuild or (not settings.release_mode and self.__importable.needs_rebuild()):
             self.__importable.build()
         return self.__importable.load()
 
 
-# Add the hook to the list of import handlers for Python.
-sys.meta_path.insert(0, Finder())
+if not settings.release_mode:
+    # Add the hook to the list of import handlers for Python.
+    sys.meta_path.insert(0, Finder())

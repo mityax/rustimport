@@ -5,12 +5,12 @@ import os.path
 import shutil
 import sysconfig
 import types
-from functools import cached_property
 from typing import Optional
 
 from rustimport import load, BuildError, settings
 from rustimport.checksum import is_checksum_valid, save_checksum
 from rustimport.compiler import Cargo
+from rustimport.pre_processing import Preprocessor
 
 _logger = logging.getLogger(__name__)
 
@@ -51,11 +51,10 @@ class Importable(abc.ABC):
         """
         raise NotImplemented
 
-    @property
-    def needs_rebuild(self) -> bool:
+    def needs_rebuild(self, release: bool = False) -> bool:
         if not os.path.isfile(self.extension_path):
             return True
-        if not is_checksum_valid(self.extension_path, self.dependencies):
+        if not is_checksum_valid(self.extension_path, self.dependencies, release=release):
             return True
         return False
 
@@ -75,6 +74,15 @@ class Importable(abc.ABC):
 
 class SingleFileImportable(Importable):
     """Importable for single-file rust libraries (a single .rs file)"""
+
+    @property
+    def dependencies(self):
+        directory = os.path.dirname(self.path)
+        p = Preprocessor(self.path, lib_name=self.name).process()
+        return [
+            self.path,
+            *[os.path.join(directory, d) for d in p.dependency_file_patterns]
+        ]
 
     @property
     def __crate_name(self):
@@ -100,10 +108,17 @@ class SingleFileImportable(Importable):
         src_path = os.path.join(path, 'src')
 
         os.makedirs(src_path, exist_ok=True)
-        shutil.copy2(self.path, os.path.join(src_path, 'lib.rs'))
+
+        preprocessed = Preprocessor(self.path, lib_name=self.name).process()
+
+        if preprocessed.updated_source is not None:
+            with open(os.path.join(src_path, 'lib.rs'), 'wb+') as f:
+                f.write(preprocessed.updated_source)
+        else:
+            shutil.copy2(self.path, os.path.join(src_path, 'lib.rs'))
 
         with open(os.path.join(path, 'Cargo.toml'), 'wb+') as f:
-            f.write(self.__cargo_manifest)
+            f.write(preprocessed.cargo_manifest)
 
         build_result = Cargo().build(
             path,
@@ -114,21 +129,11 @@ class SingleFileImportable(Importable):
         if not build_result.success:
             raise BuildError(f"Failed to build {self.path}")
 
-        save_checksum(self.extension_path, self.dependencies)
-
-    @cached_property
-    def __cargo_manifest(self) -> bytes:
-        manifest = b''
-        with open(self.path, 'rb') as f:
-            for line in (l.strip() for l in f):
-                if line and not line.startswith(b"//"):
-                    break
-                if line.startswith(b'//:'):
-                    manifest += line[3:].lstrip() + b'\n'
-        return manifest + b'\n'
+        save_checksum(self.extension_path, self.dependencies, release=release)
 
 
 class CrateImportable(Importable):
+    """Importable allowing to import a whole rust crate directory."""
 
     @property
     def __crate_path(self):
@@ -140,9 +145,12 @@ class CrateImportable(Importable):
 
     @property
     def dependencies(self):
+        src_path = os.path.join(self.__crate_path, 'src')
+        p = Preprocessor(os.path.join(src_path, 'lib.rs'), lib_name=self.name).process()
         return [
             os.path.join(self.__crate_path, '**/*.rs'),
             os.path.join(self.__crate_path, '**/Cargo.*'),
+            *[os.path.join(src_path, d) for d in p.dependency_file_patterns],
         ]
 
     @classmethod
@@ -155,18 +163,31 @@ class CrateImportable(Importable):
                     and not os.path.isfile(os.path.join(directory, '.rustimport')) \
                     and not _check_first_line_contains_rustimport(manifest_path):
                 return None
-
+            print(f"opt_in={opt_in} for {manifest_path}, but still creating crateimportable.")
             return CrateImportable(path=directory, fullname=fullname)
 
     def build(self, release: bool = False):
-        path = os.path.join(self.build_tempdir, os.path.basename(self.__crate_path))
-        _logger.debug(f"Building in temporary directory {path}")
+        output_path = os.path.join(self.build_tempdir, os.path.basename(self.__crate_path))
+        _logger.debug(f"Building in temporary directory {output_path}")
 
-        os.makedirs(path, exist_ok=True)
-        shutil.copytree(self.__crate_path, path, dirs_exist_ok=True)
+        os.makedirs(output_path, exist_ok=True)
+        shutil.copytree(self.__crate_path, output_path, dirs_exist_ok=True)
+
+        preprocessed = Preprocessor(
+            os.path.join(self.__crate_path, 'src/lib.rs'),
+            lib_name=self.name,
+            cargo_manifest_path=os.path.join(self.__crate_path, 'Cargo.toml'),
+        ).process()
+
+        if preprocessed.updated_source is not None:
+            with open(os.path.join(output_path, 'src/lib.rs'), 'wb') as f:
+                f.write(preprocessed.updated_source)
+
+        with open(os.path.join(output_path, 'Cargo.toml'), 'wb') as f:
+            f.write(preprocessed.cargo_manifest)
 
         build_result = Cargo().build(
-            path,
+            output_path,
             destination_path=self.extension_path,
             release=release,
         )
@@ -174,7 +195,7 @@ class CrateImportable(Importable):
         if not build_result.success:
             raise BuildError(f"Failed to build {self.path}")
 
-        save_checksum(self.extension_path, self.dependencies)
+        save_checksum(self.extension_path, self.dependencies, release=release)
 
 
 all_importables = [
@@ -185,7 +206,9 @@ all_importables = [
 
 def _check_first_line_contains_rustimport(filepath: str) -> bool:
     with open(filepath, "r") as f:
-        return "rustimport" in f.readline()
+        while not (line := f.readline().strip()):  # skip empty lines
+            pass
+        return "rustimport" in line
 
 
 def get_extension_suffix():

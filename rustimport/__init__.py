@@ -6,7 +6,6 @@ import os
 import types
 
 from rustimport import settings
-from rustimport.importable import CrateImportable
 
 _logger = logging.getLogger("rustimport")
 
@@ -27,10 +26,14 @@ def imp(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild
     -------
     module : the compiled and loaded Python extension module
     """
+    if settings.release_mode:
+        import importlib
+        return importlib.import_module(fullname)
+
     from rustimport.find import find_module_importable
 
     importable = find_module_importable(fullname, opt_in)
-    if force_rebuild or importable.needs_rebuild:
+    if force_rebuild or (not settings.release_mode and importable.needs_rebuild()):
         importable.build()
     return importable.load()
 
@@ -50,11 +53,15 @@ def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool=s
     -------
     module : the compiled and loaded Python extension module
     """
+    if settings.release_mode:
+        import importlib
+        return importlib.import_module(fullname)
+
     from rustimport.importable import all_importables
 
     for importable in all_importables:
         if i := importable.try_create(path, fullname=fullname, opt_in=opt_in):
-            if force_rebuild or i.needs_rebuild:
+            if force_rebuild or (not settings.release_mode and i.needs_rebuild()):
                 i.build()
             return importable.load()
 
@@ -75,7 +82,7 @@ def build(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebui
     from rustimport.find import find_module_importable
 
     importable = find_module_importable(fullname, opt_in=opt_in)
-    if force_rebuild or importable.needs_rebuild:
+    if force_rebuild or importable.needs_rebuild(release=release):
         importable.build(release=release)
     return importable
 
@@ -99,7 +106,7 @@ def build_filepath(path, opt_in: bool=False, force_rebuild: bool=settings.force_
 
     for importable in all_importables:
         if i := importable.try_create(path, opt_in=opt_in):
-            if force_rebuild or importable.needs_rebuild:
+            if force_rebuild or importable.needs_rebuild(release=release):
                 importable.build(release=release)
                 return importable
 
@@ -113,15 +120,20 @@ def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.fo
     ----------
     root_directory : the root directory to search for cpp source files in.
     """
-    from rustimport.importable import SingleFileImportable
+    from rustimport.importable import (
+        SingleFileImportable,
+        CrateImportable,
+    )
 
     importables = []
 
     logging.info(f"Collecting rust extensions in {root_directory}…")
-    for directory, _, files in os.walk(root_directory):
+    for directory, subdirs, files in os.walk(root_directory, topdown=True):
         if any(f.lower() == 'cargo.toml' for f in files):
             if i := CrateImportable.try_create(directory, opt_in=opt_in):
                 importables.append(i)
+            # We never recurse into subdirectories of crates:
+            del subdirs[:]
         else:
             for file in files:
                 if os.path.splitext(file)[1] == '.rs':
@@ -129,12 +141,26 @@ def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.fo
                     if i is not None:
                         importables.append(i)
 
-    logging.info(f"Found {len(importables)} extensions.")
+    logging.info(f"Found {len(importables)} {'extension' if len(importables) == 1 else 'extensions'}.")
+    not_built = []
     for index, i in enumerate(importables):
-        logging.info(f"Building {i.path} ({index}/{len(importables)})…")
-        if force_rebuild or i.needs_rebuild:
+        if force_rebuild or i.needs_rebuild(release=release):
+            logging.info(f"Building {i.path} ({index + 1}/{len(importables)})…")
             i.build(release=release)
+        else:
+            not_built.append(i)
+
+    if not_built:
+        logging.info(f"Skipped building {len(not_built)} {'extension' if len(not_built) == 1 else 'extensions'} due"
+                     f" to unchanged source files. Re-run with `--force-rebuild` to rebuild everything.")
+    logging.info("Completed successfully.")
 
 
 class BuildError(Exception):
     """Raised if building a native rust extension fails"""
+
+
+__all__ = [
+    'settings', 'imp', 'imp_from_path', 'build',
+    'build_filepath', 'build_all', 'BuildError',
+]

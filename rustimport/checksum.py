@@ -1,9 +1,8 @@
-import hashlib
-import logging
 import glob
+import logging
 import os
 import struct
-from typing import List, Tuple, Optional, Callable, AnyStr
+from typing import List, Tuple, Optional
 
 from rustimport import settings
 
@@ -13,7 +12,7 @@ _FMT = struct.Struct("q" + str(len(_TAG)) + "s")
 logger = logging.getLogger(__name__)
 
 
-def is_checksum_valid(extension_path: str, file_patterns: List[str]) -> bool:
+def is_checksum_valid(extension_path: str, file_patterns: List[str], release: bool = False) -> bool:
     """
     Load the saved checksum from the extension file check if it matches the
     checksum computed from current source files.
@@ -22,7 +21,7 @@ def is_checksum_valid(extension_path: str, file_patterns: List[str]) -> bool:
     if old_checksum is None:
         return False  # Already logged error in load_checksum_trailer.
     try:
-        return old_checksum == _calc_cur_checksum(file_patterns)
+        return old_checksum == _calc_cur_checksum(file_patterns, release=release)
     except OSError as e:
         logger.info(
             "Checksummed file not found while checking rustimport checksum "
@@ -31,12 +30,12 @@ def is_checksum_valid(extension_path: str, file_patterns: List[str]) -> bool:
         return False
 
 
-def save_checksum(extension_path: str, file_patterns: List[str]):
+def save_checksum(extension_path: str, file_patterns: List[str], release: bool = False):
     """
     Calculate the module checksum and then write it to the end of the shared
     object.
     """
-    _save_checksum_trailer(extension_path, _calc_cur_checksum(file_patterns))
+    _save_checksum_trailer(extension_path, _calc_cur_checksum(file_patterns, release=release))
 
 
 def _load_checksum_trailer(extension_path: str) -> Optional[bytes]:
@@ -64,7 +63,7 @@ def _save_checksum_trailer(extension_path: str, cur_checksum: bytes):
         file.write(cur_checksum + _FMT.pack(len(cur_checksum), _TAG))
 
 
-def _calc_cur_checksum(file_patterns: List[str], hasher=settings.checksum_hasher) -> bytes:
+def _calc_cur_checksum(file_patterns: List[str], hasher=settings.checksum_hasher, release: bool = False) -> bytes:
     """
     Calculate the checksum for the given list of file patterns.
 
@@ -87,11 +86,15 @@ def _calc_cur_checksum(file_patterns: List[str], hasher=settings.checksum_hasher
 
     for filepath in sorted(all_files):
         with open(filepath, "rb") as f:
-            checksums.append((filepath, hasher(f.read(), usedforsecurity=False).hexdigest()))
+            if not any(c[0] == filepath for c in checksums):
+                checksums.append((filepath, hasher(f.read(), usedforsecurity=False).hexdigest()))
 
     payload = '\n'.join(
         f'{p}:{c}' for p, c in checksums
     ).encode()
+
+    if release:
+        payload = b"r\n" + payload
 
     logging.debug(f"Checksum payload: {payload}")
 

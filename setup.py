@@ -4,8 +4,8 @@ version = open("VERSION").read()
 description = open("README.md").read()
 
 setup(
-    packages=["rustimport"],
-    install_requires=[],
+    packages=["rustimport", "rustimport.pre_processing"],
+    install_requires=["toml>=0.10.2"],
     zip_safe=False,
     name="rustimport",
     version=version,

@@ -18,11 +18,11 @@ $ source .venv/bin/activate
 
 The main entrypoint for rustimport is the `rustimport.import_hook` module, which interfaces with the Python importing system to allow things like `import myrustfilename`. For a Rust file to be a valid import target, it needs to have the word `rustimport` in its first line, a crate needs to contain either a `.rustimport` file or the word "rustimport" in `Cargo.toml`s first line. Without this constraint, it is possible for the importing system to cause imports in other Python packages to fail. Before adding the first-line constraint, the `cppimport` import_hook had the unfortunate consequence of breaking some scipy modules that had adjacent C and C++ files in the directory tree - thus, `rustimport` adopted the behavior.
 
-There is an alternative, and more explicit interface provided by the `imp`, `imp_from_filepath`, `build`, `build_filepath` and `build_all` functions here.
+There is an alternative, and more explicit interface provided by the `imp`, `imp_from_path`, `build`, `build_filepath` and `build_all` functions here.
 * `imp` does exactly what the import hook does except via a function so that instead of `import foomodule` we would do `foomodule = imp('foomodule')`.
-* `imp_from_filepath` is even more explicit, allowing the user to pass a Rust filepath or crate path rather than a modulename. For example, `foomodule = imp('../rustcodedir/foodmodule.rs')`. This is rarely necessary but can be handy for debugging.
+* `imp_from_path` is even more explicit, allowing the user to pass a Rust filepath or crate path rather than a modulename. For example, `foomodule = imp('../rustcodedir/foodmodule.rs')`. This is rarely necessary but can be handy for debugging.
 * `build` is similar to `imp` except that the library is only built and not actually loaded as a Python module.
-* `build_filepath` is similar to `build` except that it allows for specifying a direct filepath, just as `imp_from_filepath` does.
+* `build_filepath` is similar to `build` except that it allows for specifying a direct filepath, just as `imp_from_path` does.
 * `build_all` can be used to build all eligible rust files and crates within a root directory. The method traverses the root directory recursively
 
 The methods listed above are located in the `__init__.py` to separate external facing API from the guts of the package that live in internal submodules.
