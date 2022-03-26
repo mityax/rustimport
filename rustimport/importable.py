@@ -163,7 +163,6 @@ class CrateImportable(Importable):
                     and not os.path.isfile(os.path.join(directory, '.rustimport')) \
                     and not _check_first_line_contains_rustimport(manifest_path):
                 return None
-            print(f"opt_in={opt_in} for {manifest_path}, but still creating crateimportable.")
             return CrateImportable(path=directory, fullname=fullname)
 
     def build(self, release: bool = False):
