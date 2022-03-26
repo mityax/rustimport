@@ -1,14 +1,7 @@
-import importlib
 import logging
-import os
 import sys
-import sysconfig
 
-import rustimport
 from rustimport import settings
-from rustimport.build_module import build_module
-from rustimport.checksum import checksum_save, is_checksum_valid
-from rustimport.templating import run_templating
 
 logger = logging.getLogger(__name__)
 

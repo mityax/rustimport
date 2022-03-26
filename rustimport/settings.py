@@ -1,3 +1,4 @@
+import hashlib
 import os
 import tempfile
 from typing import Optional
@@ -29,4 +30,13 @@ each reboot.
 For faster compile times (incremental compilation) it might make sense
 for a project to supply a permanent caching directory instead. If the specified
 directory does not exist, it'll be created automatically.
+"""
+
+checksum_hasher = hashlib.sha1
+"""
+Specify the hash function to use for hashing. This function should be compatible with all the named
+constructors from `hashlib` (e.g. `hashlib.md5(...)`  or `hashlib.sha256(...)`).
+
+By default, sha1 is used as it has the [best performance](https://github.com/SharkyRawr/python-hashlib-benchmark)
+and is [reasonably collision-proof](https://crypto.stackexchange.com/a/2584).
 """

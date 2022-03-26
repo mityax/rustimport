@@ -13,7 +13,7 @@ setup(
     description="Import C++ files directly from Python!",
     long_description=description,
     long_description_content_type="text/markdown",
-    url="https://github.com/tbenthompson/cppimport",
+    url="https://github.com/tbenthompson/rustimport",
     author="T. Ben Thompson",
     author_email="t.ben.thompson@gmail.com",
     license="MIT",

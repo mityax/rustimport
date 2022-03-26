@@ -4,13 +4,12 @@ import logging
 import os.path
 import shutil
 import sysconfig
-import tempfile
 import types
 from functools import cached_property
 from typing import Optional
 
-from rustimport import importer, BuildError, settings
-from rustimport.checksum import is_checksum_valid, checksum_save
+from rustimport import load, BuildError, settings
+from rustimport.checksum import is_checksum_valid, save_checksum
 from rustimport.compiler import Cargo
 
 _logger = logging.getLogger(__name__)
@@ -71,7 +70,7 @@ class Importable(abc.ABC):
 
     def load(self) -> types.ModuleType:
         """Load the native extension for this `Importable`, if it exists."""
-        return importer.load_module(self.extension_path, self.fullname)
+        return load.load_module(self.extension_path, self.fullname)
 
 
 class SingleFileImportable(Importable):
@@ -115,7 +114,7 @@ class SingleFileImportable(Importable):
         if not build_result.success:
             raise BuildError(f"Failed to build {self.path}")
 
-        checksum_save(self.extension_path, self.dependencies)
+        save_checksum(self.extension_path, self.dependencies)
 
     @cached_property
     def __cargo_manifest(self) -> bytes:
@@ -175,7 +174,7 @@ class CrateImportable(Importable):
         if not build_result.success:
             raise BuildError(f"Failed to build {self.path}")
 
-        checksum_save(self.extension_path, self.dependencies)
+        save_checksum(self.extension_path, self.dependencies)
 
 
 all_importables = [

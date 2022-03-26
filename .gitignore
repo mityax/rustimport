@@ -1,11 +1,11 @@
 *.swp
 *.pyc
 *.so
-*.cppimporthash
+*.rustimporthash
 .rendered.*
 __pycache__
 build
-cppimport.egg-info
+rustimport.egg-info
 dist
 .cache
 .tox

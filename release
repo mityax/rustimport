@@ -6,9 +6,9 @@ SANITY TEST:
 open new terminal
 mamba create -n testenv python=3 pip
 conda activate testenv
-pip install cppimport
+pip install rustimport
 cd tests
-python -c 'import cppimport; assert(cppimport.imp("mymodule").add(1,2) == 3);'
+python -c 'import rustimport; assert(rustimport.imp("mymodule").add(1,2) == 3);'
 
 GIT:
 git commit -m "yy.mm.dd" 
