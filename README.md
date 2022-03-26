@@ -181,12 +181,12 @@ This essentially just disables the import hook and uses the standard python util
 
 Sometimes Python just isn't fast enough. Or you have existing code in a Rust crate. So, you write a Python *extension module*, a library of compiled code. I recommend [pyo3](https://github.com/PyO3/pyo3) for Rust to Python bindings.
 
-I discovered that my productivity is slower when my development process goes from *Edit -> Test* in just Python to *Edit -> Compile -> Test* in Python plus Rust. So, `rustimport` combines the process of compiling and importing an extension in Python so that you can just run `import foobar` and not have to worry about multiple steps. Internally, `rustimport` looks for a file `foobar.rs` or a Rust crate (discovered through "foobar/Cargo.toml"). Assuming one is found, the comments at it's beginning are parsed for either a template (`rustimport:pyo3`) or a cargo manifest, then it's compiled and loaded as an extension module.
+I discovered that my productivity is slower when my development process goes from *Edit -> Test* in just Python to *Edit -> Compile -> Test* in Python plus Rust. So, `rustimport` combines the process of compiling and importing an extension in Python so that you can just run `import foobar` and not have to worry about multiple steps. Internally, `rustimport` looks for a file `foobar.rs` or a Rust crate (discovered through `foobar/Cargo.toml`). Assuming one is found, the comments at it's beginning are parsed for either a template (`rustimport:pyo3`) or a cargo manifest, then it's compiled and loaded as an extension module.
 
 ### Does rustimport recompile every time a module is imported? 
 No! Compilation should only happen the first time the module is imported. The Rust source is compared with a checksum on each import to determine if any relevant file has changed. Additional dependencies can be tracked by adding to the header comments:
 
-```python
+```rust
 //d: ../myothercrate/**/*.rs
 //d: ../myothercrate/Cargo.toml
 ```
