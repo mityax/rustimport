@@ -94,8 +94,8 @@ features = [ "extension-module",]
 2. It generated a code block exporting your method and appended it to the end of your file:
 ```rust
 #[pymodule]
-fn minimal(_py: Python, m: &PyModule) -> PyResult<()> {
-  m.add_function(wrap_pyfunction!(say_hello, m)?)?;
+fn somecode(_py: Python, m: &PyModule) -> PyResult<()> {
+  m.add_function(wrap_pyfunction!(square, m)?)?;
   Ok(())
 }
 ```
