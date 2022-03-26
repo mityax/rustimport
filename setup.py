@@ -1,21 +1,19 @@
 from setuptools import setup
 
 version = open("VERSION").read()
-
 description = open("README.md").read()
 
 setup(
     packages=["rustimport"],
-    install_requires=["mako", "pybind11"],
+    install_requires=[],
     zip_safe=False,
     name="rustimport",
     version=version,
-    description="Import C++ files directly from Python!",
+    description="Import Rust files directly from Python!",
     long_description=description,
     long_description_content_type="text/markdown",
-    url="https://github.com/tbenthompson/rustimport",
-    author="T. Ben Thompson",
-    author_email="t.ben.thompson@gmail.com",
+    url="https://github.com/mityax/rustimport",
+    author="mityax",
     license="MIT",
     platforms=["any"],
     classifiers=[
@@ -26,6 +24,6 @@ setup(
         "Topic :: Software Development",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: C++",
+        "Programming Language :: Rust",
     ],
 )

@@ -32,6 +32,9 @@ def _run_from_commandline(raw_args):
     build_parser.add_argument(
         "--force", "-f", action="store_true", help="Force rebuild."
     )
+    build_parser.add_argument(
+        "--release", "-r", action="store_true", help="Build release-optimized binaries (toggle's cargo's --release flag)."
+    )
 
     args = parser.parse_args(raw_args[1:])
 
@@ -43,19 +46,14 @@ def _run_from_commandline(raw_args):
         logging.basicConfig(level=logging.INFO)
 
     if args.action == "build":
-        if args.force:
-            settings["force_rebuild"] = True
-
         for path in args.root or ["."]:
             path = os.path.abspath(os.path.expandvars(path))
             if os.path.isfile(path):
-                build_filepath(path)
+                build_filepath(path, release=args.release, force_rebuild=args.force)
             elif os.path.isdir(path):
-                build_all(path or os.getcwd())
+                build_all(path, release=args.release, force_rebuild=args.force)
             else:
-                raise FileNotFoundError(
-                    f'The given root path "{path}" could not be found.'
-                )
+                raise FileNotFoundError(f'The given root path "{path}" could not be found.')
     else:
         parser.print_usage()
 

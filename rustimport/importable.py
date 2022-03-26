@@ -40,7 +40,7 @@ class Importable(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def try_create(cls, path: str, fullname: Optional[str], opt_in: bool = True) -> Optional['Importable']:
+    def try_create(cls, path: str, fullname: Optional[str] = None, opt_in: bool = True) -> Optional['Importable']:
         """
         Try to create an importable for the given file system path or return `None` if
         this is not possible.
@@ -81,7 +81,7 @@ class SingleFileImportable(Importable):
         return os.path.splitext(os.path.basename(self.path))[0]
 
     @classmethod
-    def try_create(cls, path: str, fullname: Optional[str], opt_in: bool = True) -> Optional['SingleFileImportable']:
+    def try_create(cls, path: str, fullname: Optional[str] = None, opt_in: bool = True) -> Optional['SingleFileImportable']:
         if not path.endswith('.rs'):
             path += '.rs'
 
@@ -146,7 +146,7 @@ class CrateImportable(Importable):
         ]
 
     @classmethod
-    def try_create(cls, path: str, fullname: Optional[str], opt_in: bool = True) -> Optional['Importable']:
+    def try_create(cls, path: str, fullname: Optional[str] = None, opt_in: bool = True) -> Optional['Importable']:
         manifest_path = path if path.lower().endswith("/cargo.toml") else os.path.join(path, 'Cargo.toml')
         directory = os.path.dirname(manifest_path)
 

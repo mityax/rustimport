@@ -5,10 +5,13 @@ import logging
 import os
 import types
 
+from rustimport import settings
+from rustimport.importable import CrateImportable
+
 _logger = logging.getLogger("rustimport")
 
 
-def imp(fullname, opt_in: bool=False, force_rebuild: bool = False) -> types.ModuleType:
+def imp(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild) -> types.ModuleType:
     """
     `imp` is the explicit alternative to using rustimport.import_hook.
 
@@ -32,7 +35,7 @@ def imp(fullname, opt_in: bool=False, force_rebuild: bool = False) -> types.Modu
     return importable.load()
 
 
-def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool = False) -> types.ModuleType:
+def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild) -> types.ModuleType:
     """
     `imp_from_path` serves the same purpose as `imp` except allows
     specifying the exact path of the rust file or crate.
@@ -50,13 +53,13 @@ def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool =
     from rustimport.importable import all_importables
 
     for importable in all_importables:
-        if i := importable.try_create(path, opt_in=opt_in):
-            if force_rebuild or importable.needs_rebuild:
-                importable.build()
+        if i := importable.try_create(path, fullname=fullname, opt_in=opt_in):
+            if force_rebuild or i.needs_rebuild:
+                i.build()
             return importable.load()
 
 
-def build(fullname, opt_in: bool = False, force_rebuild: bool = False):
+def build(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild, release: bool=False):
     """
     `build` builds a extension module like `imp` but does not import the
     extension.
@@ -73,11 +76,11 @@ def build(fullname, opt_in: bool = False, force_rebuild: bool = False):
 
     importable = find_module_importable(fullname, opt_in=opt_in)
     if force_rebuild or importable.needs_rebuild:
-        importable.build()
+        importable.build(release=release)
     return importable
 
 
-def build_filepath(path, opt_in: bool = False, force_rebuild: bool = False):
+def build_filepath(path, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild, release: bool=False):
     """
     `build_filepath` builds a extension module like `build` but allows
     to directly specify a file path.
@@ -97,11 +100,11 @@ def build_filepath(path, opt_in: bool = False, force_rebuild: bool = False):
     for importable in all_importables:
         if i := importable.try_create(path, opt_in=opt_in):
             if force_rebuild or importable.needs_rebuild:
-                importable.build()
+                importable.build(release=release)
                 return importable
 
 
-def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=False):
+def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.force_rebuild, release: bool=False):
     """
     `build_all` builds a extension module like `build` for each eligible (that is,
     containing the "rustimport" header) source file within the given `root_directory`.
@@ -112,19 +115,25 @@ def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=False):
     """
     from rustimport.importable import SingleFileImportable
 
-    for directory, subdirs, files in os.walk(root_directory):
-        for file in files:
-            path = os.path.join(directory, file)
-            importable = None
-            if os.path.splitext(file)[1] == '.rs':
-                importable = SingleFileImportable.try_create(path, opt_in=opt_in)
-            # TODO: Add support for crates:
-            # elif file.lower() == 'cargo.toml':
-            #     importable = CrateImportable.try_create(os.path.dirname(path), opt_in=opt_in)
+    importables = []
 
-            if importable is not None:
-                if force_rebuild or importable.needs_build:
-                    importable.build()
+    logging.info(f"Collecting rust extensions in {root_directory}…")
+    for directory, _, files in os.walk(root_directory):
+        if any(f.lower() == 'cargo.toml' for f in files):
+            if i := CrateImportable.try_create(directory, opt_in=opt_in):
+                importables.append(i)
+        else:
+            for file in files:
+                if os.path.splitext(file)[1] == '.rs':
+                    i = SingleFileImportable.try_create(os.path.join(directory, file), opt_in=opt_in)
+                    if i is not None:
+                        importables.append(i)
+
+    logging.info(f"Found {len(importables)} extensions.")
+    for index, i in enumerate(importables):
+        logging.info(f"Building {i.path} ({index}/{len(importables)})…")
+        if force_rebuild or i.needs_rebuild:
+            i.build(release=release)
 
 
 class BuildError(Exception):

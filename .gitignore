@@ -1,14 +1,9 @@
 *.swp
 *.pyc
 *.so
-*.rustimporthash
-.rendered.*
 __pycache__
 build
 rustimport.egg-info
 dist
 .cache
-.tox
-.mypy_cache/
-.coverage
-htmlcov
+
