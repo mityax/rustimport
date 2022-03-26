@@ -1,16 +1,15 @@
 """
 See CONTRIBUTING.md for a description of the project structure and the internal logic.
 """
-import logging
-import os
-import types
+import logging as _logging
+from types import ModuleType
 
 from rustimport import settings
 
-_logger = logging.getLogger("rustimport")
+_logger = _logging.getLogger("rustimport")
 
 
-def imp(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild) -> types.ModuleType:
+def imp(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild) -> ModuleType:
     """
     `imp` is the explicit alternative to using rustimport.import_hook.
 
@@ -38,7 +37,7 @@ def imp(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild
     return importable.load()
 
 
-def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild) -> types.ModuleType:
+def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild) -> ModuleType:
     """
     `imp_from_path` serves the same purpose as `imp` except allows
     specifying the exact path of the rust file or crate.
@@ -120,6 +119,7 @@ def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.fo
     ----------
     root_directory : the root directory to search for cpp source files in.
     """
+    import os
     from rustimport.importable import (
         SingleFileImportable,
         CrateImportable,
@@ -127,7 +127,7 @@ def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.fo
 
     importables = []
 
-    logging.info(f"Collecting rust extensions in {root_directory}…")
+    _logger.info(f"Collecting rust extensions in {root_directory}…")
     for directory, subdirs, files in os.walk(root_directory, topdown=True):
         if any(f.lower() == 'cargo.toml' for f in files):
             if i := CrateImportable.try_create(directory, opt_in=opt_in):
@@ -141,19 +141,19 @@ def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.fo
                     if i is not None:
                         importables.append(i)
 
-    logging.info(f"Found {len(importables)} {'extension' if len(importables) == 1 else 'extensions'}.")
+    _logger.info(f"Found {len(importables)} {'extension' if len(importables) == 1 else 'extensions'}.")
     not_built = []
     for index, i in enumerate(importables):
         if force_rebuild or i.needs_rebuild(release=release):
-            logging.info(f"Building {i.path} ({index + 1}/{len(importables)})…")
+            _logger.info(f"Building {i.path} ({index + 1}/{len(importables)})…")
             i.build(release=release)
         else:
             not_built.append(i)
 
     if not_built:
-        logging.info(f"Skipped building {len(not_built)} {'extension' if len(not_built) == 1 else 'extensions'} due"
+        _logger.info(f"Skipped building {len(not_built)} {'extension' if len(not_built) == 1 else 'extensions'} due"
                      f" to unchanged source files. Re-run with `--force-rebuild` to rebuild everything.")
-    logging.info("Completed successfully.")
+    _logger.info("Completed successfully.")
 
 
 class BuildError(Exception):
