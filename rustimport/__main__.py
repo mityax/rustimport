@@ -47,7 +47,7 @@ edition = "2021"
 name = "{{EXTENSION_NAME}}"
 #
 # "cdylib" is necessary to produce a shared library for Python to import from.
-# Downstream Rust code (including code in `bin/`, `examples/`, and `tests/`) will not be able
+# Downstream Rust code (including code in `bin/`, `examples/`, and `examples/`) will not be able
 # to `use {{EXTENSION_NAME}};` unless the "rlib" or "lib" crate type is also included, e.g.:
 # crate-type = ["cdylib", "rlib"]
 crate-type = ["cdylib"]

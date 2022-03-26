@@ -1,16 +1,16 @@
 // rustimport
 
 //: [package]
-//: name = "pyext-myrustlib"
+//: name = "doublecount"
 //: version = "0.1.0"
 //: authors = ["Bruno Rocha <rochacbruno@gmail.com>"]
 //:
 //: [lib]
 //: name = "myrustlib"
-//: crate-type = ["dylib"]
+//: crate-type = ["cdylib"]
 //:
 //: [dependencies.cpython]
-//: version = "0.1"
+//: version = "0.7"
 //: features = ["extension-module"]
 
 #[macro_use]
@@ -34,8 +34,8 @@ fn count_doubles(_py: Python, val: &str) -> PyResult<u64> {
     Ok(total)
 }
 
-py_module_initializer!(libdoublecount, initdoublecount, PyInit_doublecount, |py, m | {
-    try!(m.add(py, "__doc__", "This module is implemented in Rust."));
-    try!(m.add(py, "count_doubles", py_fn!(py, count_doubles(val: &str))));
+py_module_initializer!(doublecount, |py, m | {
+    m.add(py, "__doc__", "This module is implemented in Rust.")?;
+    m.add(py, "count_doubles", py_fn!(py, count_doubles(val: &str)))?;
     Ok(())
 });

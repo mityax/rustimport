@@ -211,6 +211,11 @@ Or set the environment variable `RUSTIMPORT_FORCE_REBUILD` to `true`
 
 And if this is a common occurrence, I would love to hear your use case and why the normal dependency tracking is insufficient!
 
+### Can I use something else than `pyo3`?
+Sure! Though I recommend using `pyo3` due to it's simplicity, you're completely free to use any other library, for example [`rust-cpython`](https://github.com/dgrunwald/rust-cpython).
+
+There is an example using `rust-cpython` in [examples/doublecount.rs](./examples/doublecount.rs)
+
 ### How can I make compilation faster? 
 
 Compilation happens incrementally by default. That is, the first compilation might take a bit, but subsequent ones are usually much faster.

@@ -11,7 +11,7 @@
 //: # `#[pymodule]` below.
 //: name = "singlefile"
 //:
-//: # Downstream Rust code (including code in `bin/`, `examples/`, and `tests/`) will not be able
+//: # Downstream Rust code (including code in `bin/`, `examples/`, and `examples/`) will not be able
 //: # to `use singlefile;` unless the "rlib" or "lib" crate type is also included, e.g.:
 //: # crate-type = ["cdylib", "rlib"]
 //: crate-type = ["cdylib"]
