@@ -148,7 +148,8 @@ my_crate
 
 The crate contains all necessary configuration to be directly be imported by rustimport and also some additional explanations on how to configure manually.
 
-## Building for production
+## Usage in production
+### 1. Building release binaries
 In production deployments you usually don't want to include the Rust toolchain, all the sources and compile at runtime. Therefore, a simple cli utility for pre-compiling all source files is provided. This utility may, for example, be used in CI/CD pipelines. 
 
 Usage is as simple as
@@ -157,7 +158,7 @@ Usage is as simple as
 python -m rustimport build --release
 ```
 
-This will build all `*.rs` files and Rust crates in the current directory (and it's subdirectories) if they are eligible to be imported (i.e. contain the `// rustimport` comment in the first line or a `.rustimport` file in case of a crate).
+This will build a release-optimized binary for all `*.rs` files and Rust crates in the current directory (and it's subdirectories) if they are eligible to be imported (i.e. contain the `// rustimport` comment in the first line or a `.rustimport` file in case of a crate).
 
 Alternatively, you may specifiy one or more root directories or source files to be built:
 
@@ -166,14 +167,16 @@ python -m rustimport build --release ./my/root/folder/ ./my/single/file.rs ./my/
 ```
 _Note: When specifying a path to a file, the header check (`// rustimport`) is skipped for that file._
 
-### Fine-tuning for production
+### 2. Toggling release mode on
 To further improve startup performance for production builds, you can opt-in to skip the checksum and compiled binary existence checks during importing by either setting the environment variable `RUSTIMPORT_RELEASE_MODE` to `true` or setting the configuration from within Python:
 ```python
 rustimport.settings.release_mode = True
 ```
 This essentially just disables the import hook and uses the standard python utilities to import the pre-compiled binary.
 
-**Warning:** Make sure to have all binaries pre-compiled when in release mode, as importing any missing ones will cause exceptions. 
+**Warning:** Make sure to have all binaries pre-compiled with when in release mode, as importing any missing ones will cause exceptions.
+
+In case you would, for whatever reason, like the binaries to be checked and built in production too, set `rustimport.settings.compile_release_binaries` to `True` to use release-optimized binaries.
 
 ## Frequently asked questions
 
@@ -201,6 +204,16 @@ import logging
 logging.basicConfig(level=logging.DEBUG)  # or logging.INFO for a bit less verbosity
 # ... do some rustimport stuff here
 ```
+
+### It's fast, but can it get even faster?
+To create release-optimized binaries, set
+
+```python
+rustimport.settings.compile_release_binaries=True
+```
+Or set the environment variable `RUSTIMPORT_RELEASE_BINARIES` to `true`
+
+Compilation might be a little bit slower now due to rust's optimization mechanisms, but at runtime the extension is significantly faster in most cases.
 
 ### How can I force a rebuild even when the checksum matches?
 
