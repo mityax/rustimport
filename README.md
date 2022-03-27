@@ -209,7 +209,7 @@ logging.basicConfig(level=logging.DEBUG)  # or logging.INFO for a bit less verbo
 To create release-optimized binaries, set
 
 ```python
-rustimport.settings.compile_release_binaries=True
+rustimport.settings.compile_release_binaries = True
 ```
 Or set the environment variable `RUSTIMPORT_RELEASE_BINARIES` to `true`
 
