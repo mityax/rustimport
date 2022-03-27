@@ -1,5 +1,6 @@
 import logging
 import sys
+from contextlib import contextmanager
 
 from rustimport import settings
 
@@ -15,17 +16,24 @@ def _actually_load_module(extension_path: str, fullname: str):
 
     return module
 
-    #return importlib.import_module(fullname)
-
 
 def load_module(extension_path: str, fullname: str):
+    with dlopen_flags():
+        return _actually_load_module(extension_path, fullname)
+
+
+@contextmanager
+def dlopen_flags():
+    # See `rustimport.settings.rtld_flags` for an explanation
+
     if hasattr(sys, "getdlopenflags"):
-        # See `rustimport.settings.rtld_flags` for an explanation
         old_flags = sys.getdlopenflags()
         new_flags = old_flags | settings.rtld_flags
-        sys.setdlopenflags(new_flags)
-        module = _actually_load_module(extension_path, fullname)
-        sys.setdlopenflags(old_flags)
-        return module
+
+        try:
+            sys.setdlopenflags(new_flags)
+            yield
+        finally:
+            sys.setdlopenflags(old_flags)
     else:
-        return _actually_load_module(extension_path, fullname)
+        yield

@@ -25,9 +25,12 @@ def imp(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild
     -------
     module : the compiled and loaded Python extension module
     """
+    from rustimport.load import dlopen_flags
+
     if settings.release_mode:
         import importlib
-        return importlib.import_module(fullname)
+        with dlopen_flags():
+            return importlib.import_module(fullname)
 
     from rustimport.find import find_module_importable
 
@@ -52,9 +55,12 @@ def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool=s
     -------
     module : the compiled and loaded Python extension module
     """
+    from rustimport.load import dlopen_flags
+
     if settings.release_mode:
         import importlib
-        return importlib.import_module(fullname)
+        with dlopen_flags():
+            return importlib.import_module(fullname)
 
     from rustimport.importable import all_importables
 
