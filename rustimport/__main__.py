@@ -4,7 +4,7 @@ import os
 import re
 import sys
 
-from rustimport import build_all, build_filepath
+from rustimport import build_all, build_filepath, settings
 
 rust_lib_template = """// rustimport:pyo3
 
@@ -126,12 +126,15 @@ def _run_from_commandline(raw_args):
         logging.basicConfig(level=logging.INFO)
 
     if args.action == "build":
+        release = args.release or settings.compile_release_binaries
+        force = args.force or settings.force_rebuild
+
         for path in args.root or ["."]:
             path = os.path.abspath(os.path.expandvars(path))
             if os.path.isfile(path):
-                build_filepath(path, release=args.release, force_rebuild=args.force)
+                build_filepath(path, release=release, force_rebuild=force)
             elif os.path.isdir(path):
-                build_all(path, release=args.release, force_rebuild=args.force)
+                build_all(path, release=release, force_rebuild=force)
             else:
                 raise FileNotFoundError(f'The given root path "{path}" could not be found.')
     elif args.action == "new":

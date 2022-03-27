@@ -1,6 +1,37 @@
+# See CONTRIBUTING.md for a description of the project structure and the internal logic.
+
 """
-See CONTRIBUTING.md for a description of the project structure and the internal logic.
+rustimport - Import Rust source files directly from Python!
+
+Example:
+Save the Rust code below as somecode.rs.
+
+```rust
+// rustimport:pyo3
+
+use pyo3::prelude::*;
+
+#[pyfunction]
+fn square(x: i32) -> PyResult<i32> {
+    Ok(x * x);
+}
+```
+
+Then open a Python interpreter and import the Rust extension:
+
+```python
+>>> import rustimport.import_hook
+>>> import somecode  # This will pause for a moment to compile the module
+>>> somecode.square(9)
+81
+```
+
+Hurray, you've called some Rust code from Python using a combination of rustimport and pyo3!
+
+For more information check the Readme on GitHub: https://github.com/mityax/rustimport
 """
+
+
 import logging as _logging
 from types import ModuleType
 
@@ -9,7 +40,7 @@ from rustimport import settings
 _logger = _logging.getLogger("rustimport")
 
 
-def imp(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild) -> ModuleType:
+def imp(fullname, opt_in: bool = False, force_rebuild: bool = settings.force_rebuild) -> ModuleType:
     """
     `imp` is the explicit alternative to using rustimport.import_hook.
 
@@ -33,14 +64,15 @@ def imp(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild
             return importlib.import_module(fullname)
 
     from rustimport.find import find_module_importable
+    from rustimport.importable import should_rebuild
 
     importable = find_module_importable(fullname, opt_in)
-    if force_rebuild or (not settings.release_mode and importable.needs_rebuild()):
-        importable.build()
+    if should_rebuild(importable, force_rebuild=force_rebuild):
+        importable.build(release=settings.compile_release_binaries)
     return importable.load()
 
 
-def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild) -> ModuleType:
+def imp_from_path(path, fullname=None, opt_in: bool = False, force_rebuild: bool = settings.force_rebuild) -> ModuleType:
     """
     `imp_from_path` serves the same purpose as `imp` except allows
     specifying the exact path of the rust file or crate.
@@ -63,15 +95,17 @@ def imp_from_path(path, fullname=None, opt_in: bool=False, force_rebuild: bool=s
             return importlib.import_module(fullname)
 
     from rustimport.importable import all_importables
+    from rustimport.importable import should_rebuild
 
     for importable in all_importables:
         if i := importable.try_create(path, fullname=fullname, opt_in=opt_in):
-            if force_rebuild or (not settings.release_mode and i.needs_rebuild()):
-                i.build()
+            if should_rebuild(importable, force_rebuild=force_rebuild):
+                i.build(release=settings.compile_release_binaries)
             return importable.load()
 
 
-def build(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild, release: bool=False):
+def build(fullname, opt_in: bool = False, force_rebuild: bool = settings.force_rebuild,
+          release: bool = settings.compile_release_binaries):
     """
     `build` builds a extension module like `imp` but does not import the
     extension.
@@ -85,14 +119,16 @@ def build(fullname, opt_in: bool=False, force_rebuild: bool=settings.force_rebui
     ext_path : the path to the compiled extension.
     """
     from rustimport.find import find_module_importable
+    from rustimport.importable import should_rebuild
 
     importable = find_module_importable(fullname, opt_in=opt_in)
-    if force_rebuild or importable.needs_rebuild(release=release):
+    if should_rebuild(importable, force_rebuild=force_rebuild, force_release=release):
         importable.build(release=release)
     return importable
 
 
-def build_filepath(path, opt_in: bool=False, force_rebuild: bool=settings.force_rebuild, release: bool=False):
+def build_filepath(path, opt_in: bool = False, force_rebuild: bool = settings.force_rebuild,
+                   release: bool = settings.compile_release_binaries):
     """
     `build_filepath` builds a extension module like `build` but allows
     to directly specify a file path.
@@ -108,15 +144,17 @@ def build_filepath(path, opt_in: bool=False, force_rebuild: bool=settings.force_
     """
 
     from rustimport.importable import all_importables
+    from rustimport.importable import should_rebuild
 
     for importable in all_importables:
         if i := importable.try_create(path, opt_in=opt_in):
-            if force_rebuild or importable.needs_rebuild(release=release):
+            if should_rebuild(i, force_rebuild=force_rebuild, force_release=release):
                 importable.build(release=release)
                 return importable
 
 
-def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.force_rebuild, release: bool=False):
+def build_all(root_directory, opt_in: bool = True, force_rebuild: bool = settings.force_rebuild,
+              release: bool = settings.compile_release_binaries):
     """
     `build_all` builds a extension module like `build` for each eligible (that is,
     containing the "rustimport" header) source file within the given `root_directory`.
@@ -129,6 +167,7 @@ def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.fo
     from rustimport.importable import (
         SingleFileImportable,
         CrateImportable,
+        should_rebuild,
     )
 
     importables = []
@@ -150,7 +189,7 @@ def build_all(root_directory, opt_in: bool=True, force_rebuild: bool=settings.fo
     _logger.info(f"Found {len(importables)} {'extension' if len(importables) == 1 else 'extensions'}.")
     not_built = []
     for index, i in enumerate(importables):
-        if force_rebuild or i.needs_rebuild(release=release):
+        if should_rebuild(i, force_rebuild=force_rebuild, force_release=release):
             _logger.info(f"Building {i.path} ({index + 1}/{len(importables)})…")
             i.build(release=release)
         else:

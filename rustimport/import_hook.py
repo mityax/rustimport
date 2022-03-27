@@ -8,7 +8,7 @@ from typing import Sequence, Optional
 
 from rustimport import settings
 from rustimport.find import find_module_importable
-from rustimport.importable import Importable
+from rustimport.importable import Importable, should_rebuild
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +44,8 @@ class Loader(importlib.abc.Loader):
         self.__importable = importable
 
     def load_module(self, fullname: str) -> types.ModuleType:
-        if settings.force_rebuild or (not settings.release_mode and self.__importable.needs_rebuild()):
-            self.__importable.build()
+        if should_rebuild(self.__importable):
+            self.__importable.build(release=settings.compile_release_binaries)
         return self.__importable.load()
 
 

@@ -213,3 +213,16 @@ def _check_first_line_contains_rustimport(filepath: str) -> bool:
 def get_extension_suffix():
     sysvar = sysconfig.get_config_var  # just an abbreviation for below
     return sysvar("EXT_SUFFIX") or sysvar("SO") or '.so'
+
+
+def should_rebuild(imp: Importable, force_rebuild: bool = False, force_release: bool = False):
+    """
+    Utility to check whether the given `Importable` should be re-built, based on the given
+    `force_rebuild` and `force_release` preferences as well as the global settings.
+    """
+
+    if settings.release_mode:
+        return False
+    if settings.force_rebuild or force_rebuild:
+        return True
+    return imp.needs_rebuild(release=settings.compile_release_binaries or force_release)
