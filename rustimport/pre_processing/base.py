@@ -24,9 +24,6 @@ class Template(abc.ABC):
         raise NotImplemented
 
     def _copy_manifest_with_defaults(self, defaults: typing.MutableMapping) -> bytes:
-        print(f"manifest: {self.cargo_manifest}")
-        print(f"defaults: {defaults}")
-        print(f"result: {merge_cargo_manifests(defaults, self.cargo_manifest)}")
         return merge_cargo_manifests(defaults, self.cargo_manifest)
 
 
