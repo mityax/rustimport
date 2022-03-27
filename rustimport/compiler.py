@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Optional, List, Dict, Any
 
 from rustimport import settings
 
@@ -49,7 +49,7 @@ class Cargo:
         if release:
             cmd.append('--release')
 
-        _logger.info(f'Building {crate_path}: {" ".join(cmd)}')
+        _logger.debug(f'Building {crate_path}: {" ".join(cmd)}')
 
         proc = subprocess.Popen(
             cmd,
@@ -125,11 +125,11 @@ def require(executable_name: str):
             "the `PATH` environment variable is set correctly.\n\n"
         )
         if os.name != 'nt':
-            sys.stderr.write("You can install the toolchain like this:\n$ curl https://sh.rustup.rs | sh\n")
+            sys.stderr.write("You can install the toolchain like this:\n$ curl https://sh.rustup.rs | sh\n\n")
         else:
             sys.stderr.write(
                 "To install the toolchain, visit https://forge.rust-lang.org/infra/other-installation-methods.html"
-                "#other-ways-to-install-rustup\n"
+                "#other-ways-to-install-rustup\n\n"
             )
 
         raise FileNotFoundError(f'Could not find {executable_name} binary.')
