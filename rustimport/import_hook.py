@@ -49,6 +49,8 @@ class Loader(importlib.abc.Loader):
         return self.__importable.load()
 
 
-if not settings.release_mode:
+if settings.release_mode and settings.rtld_flags:
+    sys.meta_path.insert(0, Finder())
+elif not settings.release_mode:
     # Add the hook to the list of import handlers for Python.
     sys.meta_path.insert(0, Finder())
