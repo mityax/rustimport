@@ -37,6 +37,7 @@ class PyO3Template(Template):
         structs = re.finditer(rb'#\[pyclass]\s*(?:\w\s+)*?struct\s+([\w0-9]+)', self.contents, re.MULTILINE)
 
         res = [
+            b'#![feature(const_fn_trait_bound)]',
             b'#[pymodule]',
             b'fn ' + self.lib_name.encode() + b'(_py: Python, m: &PyModule) -> PyResult<()> {',
             *[
