@@ -147,6 +147,21 @@ my_crate
 
 The crate contains all necessary configuration to be directly be imported by rustimport and also some additional explanations on how to configure manually.
 
+## Using environment variables
+rustimport exposed most of it's settings via environment variables. This can be pretty handy in development but also in production environments.
+
+For example, to force recompilation, just run your script like this:
+```commandline
+RUSTIMPORT_FORCE_REBUILD=true python my_script.py
+```
+
+Or to instruct the compiler to optimize binaries (for example to examine the real performance boost rust gives you) run it like this:
+```commandline
+RUSTIMPORT_RELEASE_BINARIES=true python my_script.py
+```
+
+Take a look at [settings.py](./rustimport/settings.py) for all available environment variables.
+
 ## Usage in production
 ### 1. Building release binaries
 In production deployments you usually don't want to include the Rust toolchain, all the sources and compile at runtime. Therefore, a simple cli utility for pre-compiling all source files is provided. This utility may, for example, be used in CI/CD pipelines. 
