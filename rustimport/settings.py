@@ -55,7 +55,7 @@ For faster compile times (incremental compilation) it might make sense
 for a project to supply a permanent caching directory instead. If the specified
 directory does not exist, it'll be created automatically.
 
-Env var: `RUSTIMPORT_FORCE_REBUILD=<directory path>`
+Env var: `RUSTIMPORT_CACHE_DIR=<directory path>`
 """
 
 checksum_hasher = hashlib.sha1
