@@ -27,7 +27,8 @@ class Cargo:
     def build(self, crate_path: str,
               destination_path: Optional[str] = None,
               release: bool = False,
-              suppress_output: bool = False) -> BuildResult:
+              suppress_output: bool = False,
+              additional_args: Optional[List[str]] = None) -> BuildResult:
         """
         Runs `cargo build --lib` for the given `crate_path`.
 
@@ -36,10 +37,11 @@ class Cargo:
         @param release: Whether to build a release binary (toggles Cargo's "--release" flag)
         @param suppress_output: If true, no process output will be printed to stdout. In case of build failure,
                                 the output will be collected and logged using `logging.error()` for debugging.
+        @param additional_args: Additional command line arguments to supply to the cargo executable.
         """
 
         cmd = [
-            self.executable_path, 'build',
+            self.executable_path, 'rustc',
             '--lib',
             '--message-format', 'json'
         ]
@@ -48,6 +50,8 @@ class Cargo:
             cmd.append("--quiet")
         if release:
             cmd.append('--release')
+        if additional_args:
+            cmd.extend(additional_args)
 
         _logger.debug(f'Building {crate_path}: {" ".join(cmd)}')
 

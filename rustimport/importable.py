@@ -5,7 +5,7 @@ import os.path
 import shutil
 import sysconfig
 import types
-from typing import Optional
+from typing import Optional, List, Type
 
 from rustimport import load, BuildError, settings
 from rustimport.checksum import is_checksum_valid, save_checksum
@@ -124,6 +124,7 @@ class SingleFileImportable(Importable):
             path,
             destination_path=self.extension_path,
             release=release,
+            additional_args=preprocessed.additional_cargo_args,
         )
 
         if not build_result.success:
@@ -189,6 +190,7 @@ class CrateImportable(Importable):
             output_path,
             destination_path=self.extension_path,
             release=release,
+            additional_args=preprocessed.additional_cargo_args,
         )
 
         if not build_result.success:
@@ -197,7 +199,7 @@ class CrateImportable(Importable):
         save_checksum(self.extension_path, self.dependencies, release=release)
 
 
-all_importables = [
+all_importables: List[Type[Importable]] = [
     SingleFileImportable,
     CrateImportable
 ]

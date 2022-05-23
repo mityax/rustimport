@@ -1,6 +1,4 @@
 import abc
-import collections
-import re
 import typing
 from dataclasses import dataclass
 
@@ -12,6 +10,7 @@ class Template(abc.ABC):
     class TemplatingResult:
         cargo_manifest: bytes
         contents: bytes
+        additional_cargo_args: typing.List[str]
 
     def __init__(self, path: str, lib_name: str, contents: bytes, cargo_manifest: bytes):
         self.path = path

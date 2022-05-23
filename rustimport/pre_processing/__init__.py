@@ -1,9 +1,8 @@
-import os
 import re
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Type
 
-from rustimport.pre_processing.base import merge_cargo_manifests
+from rustimport.pre_processing.base import merge_cargo_manifests, Template
 from rustimport.pre_processing.pyo3_template import PyO3Template
 
 
@@ -13,6 +12,7 @@ class Preprocessor:
         cargo_manifest: bytes
         dependency_file_patterns: List[str]
         updated_source: Optional[bytes]
+        additional_cargo_args: List[str]
 
     def __init__(self, path: str, lib_name: str, cargo_manifest_path: Optional[str] = None):
         self.path = path
@@ -42,6 +42,7 @@ class Preprocessor:
             cargo_manifest=templating_result.cargo_manifest if templating_result else manifest,
             dependency_file_patterns=deps,
             updated_source=templating_result.contents if templating_result else None,
+            additional_cargo_args=templating_result.additional_cargo_args if templating_result else [],
         )
 
     @staticmethod
@@ -64,6 +65,6 @@ class Preprocessor:
         return manifest + b'\n', template_name, dependency_file_patterns
 
 
-all_templates = {
+all_templates: Dict[str, Type[Template]] = {
     'pyo3': PyO3Template
 }

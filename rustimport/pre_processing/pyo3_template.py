@@ -1,4 +1,6 @@
 import re
+import sys
+from typing import List
 
 from rustimport.pre_processing.base import Template
 
@@ -8,6 +10,7 @@ class PyO3Template(Template):
         return Template.TemplatingResult(
             cargo_manifest=self.__generate_manifest(),
             contents=self.__process_content(),
+            additional_cargo_args=self.__get_cargo_args(),
         )
 
     def __generate_manifest(self) -> bytes:
@@ -52,3 +55,16 @@ class PyO3Template(Template):
         ]
 
         return b'\n'.join(res)
+
+    def __get_cargo_args(self) -> List[str]:
+        args = []
+        if sys.platform == "darwin":
+            # On macOS, because the extension-module feature disables linking to
+            # libpython, some additional linker arguments need to be set.
+            # See more: https://pyo3.rs/master/building_and_distribution.html#macos
+            args.extend([
+                "--",
+                "-C", "link-arg=-undefined",
+                "-C", "link-arg=dynamic_lookup",
+            ])
+        return args
