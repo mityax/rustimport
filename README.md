@@ -257,6 +257,9 @@ Or - you guessed it - use the `RUSTIMPORT_CACHE_DIR` environment variable.
 
 If this directory doesn't exist, it will be created automatically by rustimport.
 
+### Apple, huh?
+Yes, macOS is supported. No additional config should be necessary for pyo3 as the [required linker args](https://pyo3.rs/v0.5.2/overview.html#using-rust-from-python) are set automatically by rustimport.
+
 ### Why does the import hook need "rustimport" on the first line of the .rs file?
 Modifying the Python import system is a global modification and thus affects all imports from any other package. As a result, when `cppimport` was first implemented, other packages (e.g. `scipy`) suddenly started breaking because import statements internal to those packages were importing C or C++ files instead of the modules they were intended to import. To avoid this failure mode, the import hook uses an "opt in" system where C and C++ files can specify they are meant to be used with cppimport by having a comment on the first line that includes the text "cppimport". 
 
