@@ -111,7 +111,7 @@ def _run_from_commandline(raw_args):
 
     new_parser = subparsers.add_parser(
         "new",
-        help="Create a new create or single-file extension ready to be imported with rustimport. If the specified "
+        help="Create a new crate or single-file extension ready to be imported with rustimport. If the specified "
              "name ends with \".rs\", a single-file extension is created, otherwise, a crate will be set up.",
     )
     new_parser.add_argument("path")
