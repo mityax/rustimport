@@ -5,6 +5,7 @@ import os.path
 import shutil
 import sysconfig
 import types
+from functools import cached_property
 from typing import Optional, List, Type
 
 from rustimport import load, BuildError, settings
@@ -23,19 +24,19 @@ class Importable(abc.ABC):
         self.fullname = fullname or os.path.splitext(os.path.basename(path))[0]
 
     @property
-    def extension_path(self):
+    def extension_path(self) -> str:
         return os.path.join(os.path.dirname(self.path), self.name) + get_extension_suffix()
 
     @property
-    def build_tempdir(self):
+    def build_tempdir(self) -> str:
         return os.path.join(settings.cache_dir, f'{self.fullname}-{hashlib.md5(self.path.encode()).hexdigest()}')
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.fullname.split('.')[-1]
 
     @property
-    def dependencies(self):
+    def dependencies(self) -> List[str]:
         return [self.path]
 
     @classmethod
@@ -134,23 +135,44 @@ class SingleFileImportable(Importable):
 
 
 class CrateImportable(Importable):
-    """Importable allowing to import a whole rust crate directory."""
+    """
+    Importable allowing to import a whole rust crate directory.
+
+    This importable also allows to import crates within a cargo
+    workspace – i.e. it handles the according dependencies.
+    """
 
     @property
-    def __crate_path(self):
+    def __crate_path(self) -> str:
         return os.path.dirname(self.__manifest_path)
 
     @property
-    def __manifest_path(self):
+    def __manifest_path(self) -> str:
         return self.path if self.path.lower().endswith("/cargo.toml") else os.path.join(self.path, 'Cargo.toml')
 
-    @property
-    def dependencies(self):
+    @cached_property
+    def __workspace_path(self) -> Optional[str]:
+        """Returns the path of the cargo workspace this crate belongs to, if there is any."""
+
+        p = self.__crate_path
+        while os.path.dirname(p) != os.path.sep:  # loop through all parent directories...
+            p = os.path.dirname(p)
+
+            if os.path.isfile(os.path.join(p, "Cargo.toml")):  # ... and check for a "Cargo.toml" file in each of them.
+                return p
+
+        return None
+
+    @cached_property
+    def dependencies(self) -> List[str]:
+        root_path = self.__workspace_path or self.__crate_path
         src_path = os.path.join(self.__crate_path, 'src')
+
         p = Preprocessor(os.path.join(src_path, 'lib.rs'), lib_name=self.name).process()
+
         return [
-            os.path.join(self.__crate_path, '**/*.rs'),
-            os.path.join(self.__crate_path, '**/Cargo.*'),
+            os.path.join(root_path, '**/*.rs'),
+            os.path.join(root_path, '**/Cargo.*'),
             *[os.path.join(src_path, d) for d in p.dependency_file_patterns],
         ]
 
@@ -167,11 +189,21 @@ class CrateImportable(Importable):
             return CrateImportable(path=directory, fullname=fullname)
 
     def build(self, release: bool = False):
-        output_path = os.path.join(self.build_tempdir, os.path.basename(self.__crate_path))
-        _logger.debug(f"Building in temporary directory {output_path}")
+        if self.__workspace_path is not None:
+            _logger.debug(f"The crate belongs to workspace {self.__workspace_path}")
 
-        os.makedirs(output_path, exist_ok=True)
-        shutil.copytree(self.__crate_path, output_path, dirs_exist_ok=True)
+        root_output_path = os.path.join(  # e.g. `/output/path/myworkspace` or `/output/path/mycrate` respectively
+            self.build_tempdir,
+            os.path.basename(self.__workspace_path or self.__crate_path)
+        )
+        crate_output_subdirectory = os.path.normpath(os.path.join(  # e.g. `/output/path/myworkspace/mycrate` or `/output/path/mycrate`
+            root_output_path,
+            os.path.relpath(self.__crate_path, self.__workspace_path or self.__crate_path)
+        ))
+        _logger.debug(f"Building in temporary directory {crate_output_subdirectory}")
+
+        os.makedirs(root_output_path, exist_ok=True)
+        shutil.copytree(self.__workspace_path or self.__crate_path, root_output_path, dirs_exist_ok=True)
 
         preprocessed = Preprocessor(
             os.path.join(self.__crate_path, 'src/lib.rs'),
@@ -180,14 +212,14 @@ class CrateImportable(Importable):
         ).process()
 
         if preprocessed.updated_source is not None:
-            with open(os.path.join(output_path, 'src/lib.rs'), 'wb') as f:
+            with open(os.path.join(crate_output_subdirectory, 'src/lib.rs'), 'wb') as f:
                 f.write(preprocessed.updated_source)
 
-        with open(os.path.join(output_path, 'Cargo.toml'), 'wb') as f:
+        with open(os.path.join(crate_output_subdirectory, 'Cargo.toml'), 'wb') as f:
             f.write(preprocessed.cargo_manifest)
 
         build_result = Cargo().build(
-            output_path,
+            crate_output_subdirectory,
             destination_path=self.extension_path,
             release=release,
             additional_args=preprocessed.additional_cargo_args,
