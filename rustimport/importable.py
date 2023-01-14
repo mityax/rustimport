@@ -90,7 +90,8 @@ class SingleFileImportable(Importable):
         return os.path.splitext(os.path.basename(self.path))[0]
 
     @classmethod
-    def try_create(cls, path: str, fullname: Optional[str] = None, opt_in: bool = True) -> Optional['SingleFileImportable']:
+    def try_create(cls, path: str, fullname: Optional[str] = None, opt_in: bool = True) -> Optional[
+        'SingleFileImportable']:
         if not path.endswith('.rs'):
             path += '.rs'
 
@@ -196,14 +197,15 @@ class CrateImportable(Importable):
             self.build_tempdir,
             os.path.basename(self.__workspace_path or self.__crate_path)
         )
-        crate_output_subdirectory = os.path.normpath(os.path.join(  # e.g. `/output/path/myworkspace/mycrate` or `/output/path/mycrate`
-            root_output_path,
-            os.path.relpath(self.__crate_path, self.__workspace_path or self.__crate_path)
-        ))
+        crate_output_subdirectory = os.path.normpath(
+            os.path.join(  # e.g. `/output/path/myworkspace/mycrate` or `/output/path/mycrate`
+                root_output_path,
+                os.path.relpath(self.__crate_path, self.__workspace_path or self.__crate_path)
+            ))
         _logger.debug(f"Building in temporary directory {crate_output_subdirectory}")
 
         os.makedirs(root_output_path, exist_ok=True)
-        shutil.copytree(self.__workspace_path or self.__crate_path, root_output_path, dirs_exist_ok=True)
+        self._copy_self_to_output(root_output_path)
 
         preprocessed = Preprocessor(
             os.path.join(self.__crate_path, 'src/lib.rs'),
@@ -229,6 +231,16 @@ class CrateImportable(Importable):
             raise BuildError(f"Failed to build {self.path}")
 
         save_checksum(self.extension_path, self.dependencies, release=release)
+
+    def _copy_self_to_output(self, root_output_path: str):
+        src_path = self.__workspace_path or self.__crate_path
+
+        def ignore(src: str, names: List[str]) -> List[str]:
+            if src == src_path and 'target' in names:
+                return ['target']
+            return []
+
+        shutil.copytree(src_path, root_output_path, ignore=ignore, dirs_exist_ok=True)
 
 
 all_importables: List[Type[Importable]] = [
