@@ -21,8 +21,8 @@ Save the Rust code below as `somecode.rs`.
 use pyo3::prelude::*;
 
 #[pyfunction]
-fn square(x: i32) -> PyResult<i32> {
-    Ok(x * x);
+fn square(x: i32) -> i32 {
+    x * x
 }
 ```
 
