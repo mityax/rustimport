@@ -96,6 +96,4 @@ def _calc_cur_checksum(file_patterns: List[str], hasher=settings.checksum_hasher
     if release:
         payload = b"r\n" + payload
 
-    logging.debug(f"Checksum payload: {payload}")
-
     return hasher(payload, usedforsecurity=False).hexdigest().encode()

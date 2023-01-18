@@ -11,6 +11,7 @@ from typing import Optional, List, Type
 from rustimport import load, BuildError, settings
 from rustimport.checksum import is_checksum_valid, save_checksum
 from rustimport.compiler import Cargo
+from rustimport.error_handling import notify_potential_failure_reason
 from rustimport.pre_processing import Preprocessor
 
 _logger = logging.getLogger(__name__)
@@ -96,6 +97,12 @@ class SingleFileImportable(Importable):
 
         if os.path.isfile(path):
             if opt_in and not _check_first_line_contains_rustimport(path):
+                notify_potential_failure_reason(
+                    f"An importable candidate for the module `{fullname}` was found at {path}, but does "
+                    f"not contain the rustimport opt-in comment. If this is the intended importable, "
+                    f"either add \"// rustimport\" to it's first line or use "
+                    f"`{fullname.split('.')[-1]} = rustimport.imp(\"{fullname}\")` to import the module."
+                )
                 return None
 
             _logger.debug(f"[try_import]: Successfully created SingleFileImportable to import from {path}.")
@@ -163,6 +170,24 @@ class CrateImportable(Importable):
 
         return None
 
+    @property
+    def build_tempdir(self) -> str:
+        # We overwrite this property in order to return a temporary directory that
+        # is specific to the workspace (if any), not to the crate being built. This
+        # allows reusing the cache of multiple crates within one workspace.
+        # If the crate is not within a workspace, we fall back to the default behaviour.
+
+        if not self.__workspace_path:
+            return super().build_tempdir
+
+        return os.path.join(
+            settings.cache_dir,
+            '{name}-{hash}'.format(
+                name=os.path.basename(self.__workspace_path),
+                hash=hashlib.md5(self.__workspace_path.encode()).hexdigest(),
+            )
+        )
+
     @cached_property
     def dependencies(self) -> List[str]:
         root_path = self.__workspace_path or self.__crate_path
@@ -185,6 +210,12 @@ class CrateImportable(Importable):
             if opt_in \
                     and not os.path.isfile(os.path.join(directory, '.rustimport')) \
                     and not _check_first_line_contains_rustimport(manifest_path):
+                notify_potential_failure_reason(
+                    f"A crate importable candidate for the module `{fullname}` was found at {path}, but "
+                    f"it does not contain the rustimport opt-in marker. If this is the intended importable, "
+                    f"either add a \".rustimport\" file in the crate's root directory or use "
+                    f"`{fullname.split('.')[-1]} = rustimport.imp(\"{fullname}\")` to import it."
+                )
                 return None
             return CrateImportable(path=directory, fullname=fullname)
 
@@ -192,19 +223,58 @@ class CrateImportable(Importable):
         if self.__workspace_path is not None:
             _logger.debug(f"The crate belongs to workspace {self.__workspace_path}")
 
-        root_output_path = os.path.join(  # e.g. `/output/path/myworkspace` or `/output/path/mycrate` respectively
-            self.build_tempdir,
-            os.path.basename(self.__workspace_path or self.__crate_path)
-        )
+        root_output_path = self._copy_source_to_build_dir()
+
+        # The full path to the crate, regardless of whether it is within a workspace or not:
         crate_output_subdirectory = os.path.normpath(os.path.join(  # e.g. `/output/path/myworkspace/mycrate` or `/output/path/mycrate`
             root_output_path,
             os.path.relpath(self.__crate_path, self.__workspace_path or self.__crate_path)
         ))
+
         _logger.debug(f"Building in temporary directory {crate_output_subdirectory}")
 
-        os.makedirs(root_output_path, exist_ok=True)
-        shutil.copytree(self.__workspace_path or self.__crate_path, root_output_path, dirs_exist_ok=True)
+        preprocessor_result = self._preprocess(crate_output_subdirectory)
 
+        build_result = Cargo().build(
+            crate_output_subdirectory,
+            destination_path=self.extension_path,
+            release=release,
+            additional_args=preprocessor_result.additional_cargo_args,
+        )
+
+        if not build_result.success:
+            raise BuildError(f"Failed to build {self.path}")
+
+        save_checksum(self.extension_path, self.dependencies, release=release)
+
+    def _copy_source_to_build_dir(self) -> str:
+        """
+        Copies the source crate or workspace into the temporary build directory
+        and return the root path (i.e. to the workspace directory if we're in a
+        workspace, to the crate otherwise).
+        """
+
+        src_path = self.__workspace_path or self.__crate_path
+        output_path = os.path.join(  # e.g. `/output/path/myworkspace` or `/output/path/mycrate` respectively
+            self.build_tempdir,
+            os.path.basename(self.__workspace_path or self.__crate_path)
+        )
+
+        def ignore(src: str, names: List[str]) -> List[str]:
+            if src == src_path and 'target' in names:
+                return ['target']  # do not copy the root "target" folder as it may be huge and slow
+            return []
+
+        os.makedirs(output_path, exist_ok=True)
+        shutil.copytree(src_path, output_path, ignore=ignore, dirs_exist_ok=True)
+
+        return output_path
+
+    def _preprocess(self, crate_output_subdirectory: str) -> Preprocessor.PreprocessorResult:
+        """
+        Calls [Preprocessor.process()] on the crate, updates the source files
+        with the result and returns the result for further usage.
+        """
         preprocessed = Preprocessor(
             os.path.join(self.__crate_path, 'src/lib.rs'),
             lib_name=self.name,
@@ -218,17 +288,7 @@ class CrateImportable(Importable):
         with open(os.path.join(crate_output_subdirectory, 'Cargo.toml'), 'wb') as f:
             f.write(preprocessed.cargo_manifest)
 
-        build_result = Cargo().build(
-            crate_output_subdirectory,
-            destination_path=self.extension_path,
-            release=release,
-            additional_args=preprocessed.additional_cargo_args,
-        )
-
-        if not build_result.success:
-            raise BuildError(f"Failed to build {self.path}")
-
-        save_checksum(self.extension_path, self.dependencies, release=release)
+        return preprocessed
 
 
 all_importables: List[Type[Importable]] = [

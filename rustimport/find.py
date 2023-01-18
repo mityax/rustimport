@@ -1,15 +1,20 @@
 import os
 import sys
 
+from rustimport.error_handling import get_potential_failure_reasons
 from rustimport.importable import all_importables, Importable
 
 
 def find_module_importable(modulename: str, opt_in: bool = False) -> Importable:
     importable = _find_importable(modulename, opt_in)
     if importable is None:
+        reasons_list = "\n".join([
+            "  - " + "\n    ".join(r.splitlines())
+            for r in get_potential_failure_reasons()
+        ])
         raise ImportError(
-            f"Couldn't find a file or crate matching the module"
-            f" name: {modulename} (opt_in: {opt_in})"
+            f"Couldn't find a valid import target matching the module name: {modulename} (opt_in: {opt_in})." +
+            (f" This could be potential reasons: \n{reasons_list}" if reasons_list else "")
         )
     return importable
 

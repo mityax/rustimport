@@ -1,3 +1,4 @@
+import contextlib
 import importlib.abc
 import logging
 import sys
@@ -10,7 +11,7 @@ from rustimport import settings
 from rustimport.find import find_module_importable
 from rustimport.importable import Importable, should_rebuild
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class Finder(importlib.abc.MetaPathFinder):
@@ -27,14 +28,17 @@ class Finder(importlib.abc.MetaPathFinder):
         try:
             self.__running = True
 
-            return ModuleSpec(
-                name=fullname,
-                loader=Loader(find_module_importable(fullname, opt_in=True)),
-            )
-        except ImportError:
+            importable = find_module_importable(fullname, opt_in=True)
+
+            if importable is not None:
+                return ModuleSpec(
+                    name=fullname,
+                    loader=Loader(importable),
+                )
+        except ImportError as e:
             # ImportError should be quashed because that simply means rustimport
             # didn't find anything, and probably shouldn't have found anything!
-            logger.debug(f"Couldn't find rust module {fullname}: {traceback.format_exc()}")
+            _logger.debug(e.msg)
         finally:
             self.__running = False
 
@@ -49,8 +53,6 @@ class Loader(importlib.abc.Loader):
         return self.__importable.load()
 
 
-if settings.release_mode and settings.rtld_flags:
-    sys.meta_path.insert(0, Finder())
-elif not settings.release_mode:
+if settings.rtld_flags or not settings.release_mode:
     # Add the hook to the list of import handlers for Python.
     sys.meta_path.insert(0, Finder())

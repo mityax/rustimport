@@ -12,8 +12,8 @@ Save the Rust code below as somecode.rs.
 use pyo3::prelude::*;
 
 #[pyfunction]
-fn square(x: i32) -> PyResult<i32> {
-    Ok(x * x);
+fn square(x: i32) -> i32 {
+    x * x
 }
 ```
 
@@ -36,6 +36,7 @@ import logging as _logging
 from types import ModuleType
 
 from rustimport import settings
+from rustimport.error_handling import BuildError
 
 _logger = _logging.getLogger("rustimport")
 
@@ -67,8 +68,10 @@ def imp(fullname, opt_in: bool = False, force_rebuild: bool = settings.force_reb
     from rustimport.importable import should_rebuild
 
     importable = find_module_importable(fullname, opt_in)
+
     if should_rebuild(importable, force_rebuild=force_rebuild):
         importable.build(release=settings.compile_release_binaries)
+
     return importable.load()
 
 
@@ -199,10 +202,6 @@ def build_all(root_directory, opt_in: bool = True, force_rebuild: bool = setting
         _logger.info(f"Skipped building {len(not_built)} {'extension' if len(not_built) == 1 else 'extensions'} due"
                      f" to unchanged source files. Re-run with `--force-rebuild` to rebuild everything.")
     _logger.info("Completed successfully.")
-
-
-class BuildError(Exception):
-    """Raised if building a native rust extension fails"""
 
 
 __all__ = [

@@ -62,7 +62,8 @@ class Cargo:
             stderr=subprocess.PIPE if suppress_output else None,
         )
 
-        result = self.__handle_build_process(crate_path, proc)
+        with proc:
+            result = self.__handle_build_process(crate_path, proc)
 
         if not result.success and suppress_output:
             _logger.error(f"Compilation failed. Cargo build output:\n\n"
