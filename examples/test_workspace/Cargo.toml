@@ -2,5 +2,6 @@
 
 members = [
     "crate_a",
-    "crate_b"
+    "crate_b",
+    "crate_c"
 ]

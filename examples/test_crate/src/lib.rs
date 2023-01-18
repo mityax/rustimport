@@ -3,8 +3,8 @@
 use pyo3::prelude::*;
 
 #[pyfunction]
-fn say_hello() {
-    println!("Hello from test_crate, implemented in Rust!")
+fn say_hello() -> String {
+    "Hello from test_crate, implemented in Rust!".to_string()
 }
 
 // Uncomment the below to implement custom pyo3 binding code. Otherwise, 

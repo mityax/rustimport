@@ -3,6 +3,6 @@
 use pyo3::prelude::*;
 
 #[pyfunction]
-fn say_hello() {
-    println!("Hello from Rust!")
+fn say_hello() -> String {
+    "Hello from Rust!".to_string()
 }

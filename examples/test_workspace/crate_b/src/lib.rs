@@ -1,4 +1,6 @@
+use std::ops::Add;
 
-pub fn sum(a: i32, b: i32) -> i32 {
+// Generic method to build the sum of any to things that can be summed
+pub fn sum<T: Add<Output = T>>(a: T, b: T) -> T {
     a + b
 }
