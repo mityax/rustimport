@@ -2,7 +2,6 @@ import hashlib
 import os
 import tempfile
 from typing import Optional
-import functools
 
 force_rebuild: bool = os.getenv("RUSTIMPORT_FORCE_REBUILD", "0").lower() in ("true", "yes", "1")
 """
@@ -59,7 +58,7 @@ directory does not exist, it'll be created automatically.
 Env var: `RUSTIMPORT_CACHE_DIR=<directory path>`
 """
 
-checksum_hasher = functools.partial(hashlib.new, 'sha1', usedforsecurity=False)
+checksum_hasher = hashlib.sha1
 """
 Specify the hash function to use for hashing. This function should be compatible with all the named
 constructors from `hashlib` (e.g. `hashlib.md5(...)`  or `hashlib.sha256(...)`).
