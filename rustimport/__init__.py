@@ -102,9 +102,9 @@ def imp_from_path(path, fullname=None, opt_in: bool = False, force_rebuild: bool
 
     for importable in all_importables:
         if i := importable.try_create(path, fullname=fullname, opt_in=opt_in):
-            if should_rebuild(importable, force_rebuild=force_rebuild):
+            if should_rebuild(i, force_rebuild=force_rebuild):
                 i.build(release=settings.compile_release_binaries)
-            return importable.load()
+            return i.load()
 
 
 def build(fullname, opt_in: bool = False, force_rebuild: bool = settings.force_rebuild,
@@ -152,7 +152,7 @@ def build_filepath(path, opt_in: bool = False, force_rebuild: bool = settings.fo
     for importable in all_importables:
         if i := importable.try_create(path, opt_in=opt_in):
             if should_rebuild(i, force_rebuild=force_rebuild, force_release=release):
-                importable.build(release=release)
+                i.build(release=release)
                 return importable
 
 
