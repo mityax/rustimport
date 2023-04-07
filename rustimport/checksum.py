@@ -87,7 +87,7 @@ def _calc_cur_checksum(file_patterns: List[str], hasher=settings.checksum_hasher
     for filepath in sorted(all_files):
         with open(filepath, "rb") as f:
             if not any(c[0] == filepath for c in checksums):
-                checksums.append((filepath, hasher(f.read(), usedforsecurity=False).hexdigest()))
+                checksums.append((filepath, hasher(f.read()).hexdigest()))
 
     payload = '\n'.join(
         f'{p}:{c}' for p, c in checksums
@@ -96,4 +96,4 @@ def _calc_cur_checksum(file_patterns: List[str], hasher=settings.checksum_hasher
     if release:
         payload = b"r\n" + payload
 
-    return hasher(payload, usedforsecurity=False).hexdigest().encode()
+    return hasher(payload).hexdigest().encode()
