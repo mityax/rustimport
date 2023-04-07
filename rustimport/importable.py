@@ -97,12 +97,13 @@ class SingleFileImportable(Importable):
 
         if os.path.isfile(path):
             if opt_in and not _check_first_line_contains_rustimport(path):
-                notify_potential_failure_reason(
-                    f"An importable candidate for the module `{fullname}` was found at {path}, but does "
-                    f"not contain the rustimport opt-in comment. If this is the intended importable, "
-                    f"either add \"// rustimport\" to it's first line or use "
-                    f"`{fullname.split('.')[-1]} = rustimport.imp(\"{fullname}\")` to import the module."
-                )
+                if fullname:
+                    notify_potential_failure_reason(
+                        f"An importable candidate for the module `{fullname}` was found at {path}, but does "
+                        f"not contain the rustimport opt-in comment. If this is the intended importable, "
+                        f"either add \"// rustimport\" to it's first line or use "
+                        f"`{fullname.split('.')[-1]} = rustimport.imp(\"{fullname}\")` to import the module."
+                    )
                 return None
 
             _logger.debug(f"[try_import]: Successfully created SingleFileImportable to import from {path}.")
@@ -210,12 +211,13 @@ class CrateImportable(Importable):
             if opt_in \
                     and not os.path.isfile(os.path.join(directory, '.rustimport')) \
                     and not _check_first_line_contains_rustimport(manifest_path):
-                notify_potential_failure_reason(
-                    f"A crate importable candidate for the module `{fullname}` was found at {path}, but "
-                    f"it does not contain the rustimport opt-in marker. If this is the intended importable, "
-                    f"either add a \".rustimport\" file in the crate's root directory or use "
-                    f"`{fullname.split('.')[-1]} = rustimport.imp(\"{fullname}\")` to import it."
-                )
+                if fullname:
+                    notify_potential_failure_reason(
+                        f"A crate importable candidate for the module `{fullname}` was found at {path}, but "
+                        f"it does not contain the rustimport opt-in marker. If this is the intended importable, "
+                        f"either add a \".rustimport\" file in the crate's root directory or use "
+                        f"`{fullname.split('.')[-1]} = rustimport.imp(\"{fullname}\")` to import it."
+                    )
                 return None
             return CrateImportable(path=directory, fullname=fullname)
 
