@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import sys
+from typing import List
 
 from rustimport import build_all, build_filepath, settings
 
@@ -59,7 +60,7 @@ pyo3 = { version = "0.16.2", features = ["extension-module"] }
 
 def create_extension(name: str):
     if not re.match(r'^[a-zA-Z]\w*(\.rs)?$', name):
-        raise ValueError(f"Invalid extension name: {name}. The name may only contain letters (preferrably lowercase), "
+        raise ValueError(f"Invalid extension name: {name}. The name may only contain letters (preferably lowercase), "
                          f"numbers and underscores and should start with a letter.")
 
     path = os.path.realpath(name)
@@ -79,7 +80,7 @@ def create_extension(name: str):
             f.write("This is a marker-file to make this crate importable by rustimport.")
 
 
-def _run_from_commandline(raw_args):
+def _run_from_commandline(raw_args: List[str]):
     parser = argparse.ArgumentParser("rustimport")
 
     parser.add_argument(
