@@ -1,8 +1,6 @@
-import contextlib
 import importlib.abc
 import logging
 import sys
-import traceback
 import types
 from importlib.machinery import ModuleSpec
 from typing import Sequence, Optional
@@ -47,6 +45,15 @@ class Loader(importlib.abc.Loader):
     def __init__(self, importable: Importable):
         self.__importable = importable
 
+    def create_module(self, spec: ModuleSpec) -> types.ModuleType | None:
+        if should_rebuild(self.__importable):
+            self.__importable.build(release=settings.compile_release_binaries)
+        return self.__importable.load()
+
+    def exec_module(self, module: types.ModuleType) -> None:
+        pass
+
+    # Deprecated; provided for older python versions:
     def load_module(self, fullname: str) -> types.ModuleType:
         if should_rebuild(self.__importable):
             self.__importable.build(release=settings.compile_release_binaries)

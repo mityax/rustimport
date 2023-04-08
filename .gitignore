@@ -6,3 +6,5 @@ build
 rustimport.egg-info
 dist
 .cache
+.venv
+venv
