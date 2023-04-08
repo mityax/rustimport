@@ -45,7 +45,7 @@ class Loader(importlib.abc.Loader):
     def __init__(self, importable: Importable):
         self.__importable = importable
 
-    def create_module(self, spec: ModuleSpec) -> types.ModuleType | None:
+    def create_module(self, spec: ModuleSpec) -> Optional[types.ModuleType]:
         if should_rebuild(self.__importable):
             self.__importable.build(release=settings.compile_release_binaries)
         return self.__importable.load()
