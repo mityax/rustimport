@@ -119,12 +119,16 @@ def _run_from_commandline(raw_args: List[str]):
 
     args = parser.parse_args(raw_args[1:])
 
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    ch.setFormatter(CLILoggingFormatter())
+
     if args.quiet:
-        logging.basicConfig(level=logging.CRITICAL)
+        logging.basicConfig(level=logging.CRITICAL, handlers=[ch])
     elif args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, handlers=[ch])
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, handlers=[ch])
 
     if args.action == "build":
         release = args.release or settings.compile_release_binaries
@@ -142,6 +146,49 @@ def _run_from_commandline(raw_args: List[str]):
         create_extension(args.path)
     else:
         parser.print_usage()
+
+
+class CLILoggingFormatter(logging.Formatter):
+    grey = "\33[90m"
+    blue = "\033[94m"
+    yellow = "\033[93m"
+    red = "\033[91m"
+    bold = "\033[1m"
+    reset = "\033[1;0m"
+
+    format_tag = "[%(levelname)s]"  # "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+    format_message = " %(message)s"
+
+    FORMATS = {
+        logging.DEBUG: grey + format_tag + reset + format_message,
+        logging.INFO: blue + format_tag + reset + format_message,
+        logging.WARNING: yellow + format_tag + reset + format_message,
+        logging.ERROR: red + format_tag + reset + format_message,
+        logging.CRITICAL: bold + red + format_tag + reset + format_message
+    }
+    COLORLESS_FORMAT = format_tag + format_message
+
+    def format(self, record):
+        if self.supports_color():
+            log_fmt = self.FORMATS.get(record.levelno)
+        else:
+            log_fmt = self.COLORLESS_FORMAT
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+    @staticmethod
+    def supports_color():
+        """
+        Returns True if the running system's terminal supports color, and False
+        otherwise.
+        """
+        # Taken from django: https://stackoverflow.com/questions/7445658/how-to-detect-if-the-console-does-support-ansi-escape-codes-in-python/22254892#22254892
+        plat = sys.platform
+        supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
+                                                      'ANSICON' in os.environ)
+        # isatty is not always implemented, #6223.
+        is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+        return supported_platform and is_a_tty
 
 
 if __name__ == "__main__":
