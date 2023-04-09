@@ -120,7 +120,6 @@ def _run_from_commandline(raw_args: List[str]):
     args = parser.parse_args(raw_args[1:])
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
     ch.setFormatter(CLILoggingFormatter())
 
     if args.quiet:
