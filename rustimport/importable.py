@@ -161,9 +161,9 @@ class CrateImportable(Importable):
     @cached_property
     def __workspace_path(self) -> Optional[str]:
         """Returns the path of the cargo workspace this crate belongs to, if there is any."""
-
+        root_dir = os.path.abspath(".").split(os.path.sep)[0] + os.path.sep
         p = self.__crate_path
-        while os.path.dirname(p) != os.path.sep:  # loop through all parent directories...
+        while os.path.dirname(p) != root_dir:  # loop through all parent directories...
             p = os.path.dirname(p)
 
             if os.path.isfile(os.path.join(p, "Cargo.toml")):  # ... and check for a "Cargo.toml" file in each of them.
