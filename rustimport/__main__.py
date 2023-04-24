@@ -54,7 +54,7 @@ name = "{{EXTENSION_NAME}}"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.16.2", features = ["extension-module"] }
+pyo3 = { version = "0.18.3", features = ["extension-module"] }
 """
 
 

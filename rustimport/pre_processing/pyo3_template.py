@@ -25,7 +25,7 @@ class PyO3Template(Template):
                 'crate-type': ['cdylib'],
             },
             'dependencies': {
-                'pyo3': {'version': '0.16.2', 'features': ['extension-module']}
+                'pyo3': {'version': '0.18.3', 'features': ['extension-module']}
             }
         })
 
@@ -37,7 +37,7 @@ class PyO3Template(Template):
     def __generate_pymodule(self) -> bytes:
         # A rather rudimentary implementation of generating PyO3 the "pymodule" macro's contents
         functions = re.finditer(
-        rb'#\[pyfunction.*\s*(?:\w+\s+)*?(?:#\[pyo3.*)?\s*(?:\w+\s+)*?fn\s+([\w0-9]+)', self.contents, re.MULTILINE
+            rb'#\[pyfunction.*\s*(?:\w+\s+)*?(?:#\[pyo3.*)?\s*(?:\w+\s+)*?fn\s+([\w0-9]+)', self.contents, re.MULTILINE
         )
         structs = re.finditer(rb'#\[pyclass]\s*(?:\w+\s+)*?(?:struct|enum)\s+([\w0-9]+)', self.contents, re.MULTILINE)
 
