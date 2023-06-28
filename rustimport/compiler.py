@@ -102,7 +102,8 @@ class Cargo:
                 messages.append(message := json.loads(line))
 
                 if message.get('reason') == 'compiler-artifact':
-                    if os.path.dirname(message.get('manifest_path')) == abs_crate_path:
+                    manifest_path = os.path.realpath(message.get('manifest_path'))
+                    if os.path.dirname(manifest_path) == abs_crate_path:
                         artifact_path = message['filenames'][0]
                 elif message.get('reason') == 'compiler-message':
                     if not proc.stderr:
