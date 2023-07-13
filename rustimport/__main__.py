@@ -58,12 +58,12 @@ pyo3 = { version = "0.18.3", features = ["extension-module"] }
 """
 
 
-def create_extension(name: str):
+def create_extension(name: str, cwd: str = '.'):
     if not re.match(r'^[a-zA-Z]\w*(\.rs)?$', name):
         raise ValueError(f"Invalid extension name: {name}. The name may only contain letters (preferably lowercase), "
                          f"numbers and underscores and should start with a letter.")
 
-    path = os.path.realpath(name)
+    path = os.path.realpath(os.path.join(cwd, name))
     name = os.path.splitext(os.path.basename(name))[0]
 
     if path.endswith(".rs"):

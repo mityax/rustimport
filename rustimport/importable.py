@@ -6,7 +6,7 @@ import shutil
 import sysconfig
 import types
 from functools import cached_property
-from typing import Optional, List, Type
+from typing import Optional, List, Type, Set
 
 from rustimport import load, BuildError, settings
 from rustimport.checksum import is_checksum_valid, save_checksum
@@ -254,6 +254,9 @@ class CrateImportable(Importable):
         Copies the source crate or workspace into the temporary build directory
         and return the root path (i.e. to the workspace directory if we're in a
         workspace, to the crate otherwise).
+
+        Note: This method also deletes entities contained in the target directory
+              should they appear to no longer be in the source directory.
         """
 
         src_path = self.__workspace_path or self.__crate_path
@@ -262,13 +265,28 @@ class CrateImportable(Importable):
             os.path.basename(self.__workspace_path or self.__crate_path)
         )
 
-        def ignore(src: str, names: List[str]) -> List[str]:
-            if src == src_path and 'target' in names:
-                return ['target']  # do not copy the root "target" folder as it may be huge and slow
-            return []
-
         os.makedirs(output_path, exist_ok=True)
-        shutil.copytree(src_path, output_path, ignore=ignore, dirs_exist_ok=True)
+
+        def ignore(src: str, names: List[str]) -> Set[str]:
+            # Do not copy the root "target" folder as it may be huge and slow:
+            return {'target'} if src == src_path else set()
+
+        # Track the copied files, so we can delete files that are no longer in the source directory:
+        copied_files = set()
+
+        def copy_function(src, dst):
+            shutil.copy2(src, dst)
+            copied_files.add(dst)
+
+        shutil.copytree(src_path, output_path, ignore=ignore, copy_function=copy_function, dirs_exist_ok=True)
+
+        # Delete files that are no longer in the source directory:
+        for root, dirs, files in os.walk(output_path, topdown=True):
+            dirs[:] = set(dirs) - ignore(root, dirs)  # remove ignored directories from the walk
+
+            for file in files:
+                if (abs_path := os.path.join(root, file)) not in copied_files:
+                    os.remove(abs_path)
 
         return output_path
 
