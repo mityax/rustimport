@@ -267,9 +267,9 @@ class CrateImportable(Importable):
 
         os.makedirs(output_path, exist_ok=True)
 
-        def ignore(src: str, names: List[str]) -> Set[str]:
+        def ignore(directory: str, names: List[str]) -> Set[str]:
             # Do not copy the root "target" folder as it may be huge and slow:
-            return {'target'} if src == src_path else set()
+            return {'target'} if directory in (src_path, output_path) else set()
 
         # Track the copied files, so we can delete files that are no longer in the source directory:
         copied_files = set()
