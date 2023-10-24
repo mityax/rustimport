@@ -187,8 +187,12 @@ from python:3.x
 
 ...
 
-run apt update -y && apt install build-essential curl -y && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-run export PATH="$HOME/.cargo/bin:${PATH}" && python -m rustimport build --release && rustup self uninstall -y
+run apt update -y && \
+    apt install curl build-essential -y && \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+run export PATH="$HOME/.cargo/bin:${PATH}" && \
+    python -m rustimport build --release && \
+    rustup self uninstall -y
 ```
 
 _Note: Because we are removing the rust toolchain after building the release binary, one must run the container with [`RUSTIMPORT_RELEASE_MODE=true`](#2-toggling-release-mode-on)_
