@@ -190,7 +190,7 @@ from python:3.x
 run apt update -y && \
     apt install curl build-essential -y && \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-run export PATH="$HOME/.cargo/bin:${PATH}" && \
+run export PATH="$HOME/.cargo/bin:$PATH" && \
     python -m rustimport build --release && \
     rustup self uninstall -y
 ```
