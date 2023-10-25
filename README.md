@@ -181,6 +181,22 @@ python -m rustimport build --release ./my/root/folder/ ./my/single/file.rs ./my/
 ```
 _Note: When specifying a path to a file, the header check (`// rustimport`) is skipped for that file._
 
+Add the release binary to an existing python-based dockerfile with only a few commands:
+```dockerfile
+from python:3.x
+
+...
+
+run apt update -y && \
+    apt install curl build-essential -y && \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+run export PATH="$HOME/.cargo/bin:$PATH" && \
+    python -m rustimport build --release && \
+    rustup self uninstall -y
+```
+
+_Note: Because we are removing the rust toolchain after building the release binary, one must run the container with [`RUSTIMPORT_RELEASE_MODE=true`](#2-toggling-release-mode-on)_
+
 ### 2. Toggling release mode on
 To further improve startup performance for production builds, you can opt-in to skip the checksum and compiled binary existence checks during importing by either setting the environment variable `RUSTIMPORT_RELEASE_MODE` to `true` or setting the configuration from within Python:
 ```python
