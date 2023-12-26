@@ -5,7 +5,7 @@ description = open("README.md").read()
 
 setup(
     packages=["rustimport", "rustimport.pre_processing"],
-    install_requires=["toml>=0.10.2"],
+    install_requires=["toml>=0.10.2", "ipython"],
     zip_safe=False,
     name="rustimport",
     version=version,
