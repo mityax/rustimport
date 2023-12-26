@@ -5,6 +5,7 @@ import subprocess
 import time
 from importlib.machinery import ExtensionFileLoader
 from pathlib import Path
+from shutil import which
 
 from IPython.core import magic_arguments
 from IPython.core.magic import Magics, cell_magic, magics_class
@@ -22,7 +23,8 @@ class RustImportIPython(Magics):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._loaded_module = set()
-        self._rust_version = subprocess.check_output(["rustc", "--version"]).decode(
+        rustc = which("rustc")
+        self._rust_version = subprocess.check_output([rustc, "--version"]).decode(
             "utf8"
         )
         self._rustimport_version = version("rustimport")
