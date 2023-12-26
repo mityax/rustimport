@@ -1,4 +1,4 @@
-# rustimport - Import Rust directly from Python!
+# rustimport - Import Rust directly from Python! 
 
 <p align=center>
     <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.6-green.svg"></a>
@@ -58,7 +58,7 @@ Hello from my_crate, implemented in Rust!
 
 Smooth!
 
-## An explanation
+## An explanation 
 
 Okay, now that I've hopefully convinced you on how exciting this is, let's get into the details of how to do this yourself. First, the comment at top is essential to opt in to rustimport. Don't forget this! (See below for an explanation of why this is necessary.)
 ```rust
@@ -192,7 +192,7 @@ fn square(x: i32) -> i32 {
 
 ## Usage in production
 ### 1. Building release binaries
-In production deployments you usually don't want to include the Rust toolchain, all the sources and compile at runtime. Therefore, a simple cli utility for pre-compiling all source files is provided. This utility may, for example, be used in CI/CD pipelines.
+In production deployments you usually don't want to include the Rust toolchain, all the sources and compile at runtime. Therefore, a simple cli utility for pre-compiling all source files is provided. This utility may, for example, be used in CI/CD pipelines. 
 
 Usage is as simple as
 
@@ -228,7 +228,7 @@ Sometimes Python just isn't fast enough. Or you have existing code in a Rust cra
 
 I discovered that my productivity is slower when my development process goes from *Edit -> Test* in just Python to *Edit -> Compile -> Test* in Python plus Rust. So, `rustimport` combines the process of compiling and importing an extension in Python so that you can just run `import foobar` and not have to worry about multiple steps. Internally, `rustimport` looks for a file `foobar.rs` or a Rust crate (discovered through `foobar/Cargo.toml`). Assuming one is found, the comments at it's beginning are parsed for either a template (`rustimport:pyo3`) or a cargo manifest, then it's compiled and loaded as an extension module.
 
-### Does rustimport recompile every time a module is imported?
+### Does rustimport recompile every time a module is imported? 
 No! Compilation should only happen the first time the module is imported. The Rust source is compared with a checksum on each import to determine if any relevant file has changed. Additional dependencies can be tracked by adding to the header comments:
 
 ```rust
@@ -272,7 +272,7 @@ Sure! Though I recommend using `pyo3` due to it's simplicity, you're completely 
 
 There is an example using `rust-cpython` in [examples/doublecount.rs](./examples/doublecount.rs)
 
-### How can I make compilation faster?
+### How can I make compilation faster? 
 
 Compilation happens incrementally by default. That is, the first compilation might take a bit, but subsequent ones are usually much faster.
 
@@ -289,7 +289,7 @@ If this directory doesn't exist, it will be created automatically by rustimport.
 Yes, macOS is supported. No additional config should be necessary for pyo3 as the [required linker args](https://pyo3.rs/v0.17.1/building_and_distribution.html#macos) are set automatically by rustimport.
 
 ### Why does the import hook need "rustimport" on the first line of the .rs file?
-Modifying the Python import system is a global modification and thus affects all imports from any other package. As a result, when `cppimport` was first implemented, other packages (e.g. `scipy`) suddenly started breaking because import statements internal to those packages were importing C or C++ files instead of the modules they were intended to import. To avoid this failure mode, the import hook uses an "opt in" system where C and C++ files can specify they are meant to be used with cppimport by having a comment on the first line that includes the text "cppimport".
+Modifying the Python import system is a global modification and thus affects all imports from any other package. As a result, when `cppimport` was first implemented, other packages (e.g. `scipy`) suddenly started breaking because import statements internal to those packages were importing C or C++ files instead of the modules they were intended to import. To avoid this failure mode, the import hook uses an "opt in" system where C and C++ files can specify they are meant to be used with cppimport by having a comment on the first line that includes the text "cppimport". 
 
 rustimport has adopted from this and follows the same pattern. Since rustimport also supports importing whole crates, an additional mechanism was necessary to make that work in the same fashion: You can either create a `.rustimport` file in the crate's root folder (next to `Cargo.toml`) or, alternatively, add a `# rustimport` comment to `Cargo.toml`s first line.
 
@@ -299,7 +299,7 @@ foobar = rustimport.imp("foobar")
 foobar = rustimport.imp_from_path("./some/path/foobar.rs")
 mycrate = rustimport.imp_from_path("./mycrate/")
 ```
-By default, these explicit function do not require the "rustimport" keyword on the first line of the .rs source file or the according marker in the crate.
+By default, these explicit function do not require the "rustimport" keyword on the first line of the .rs source file or the according marker in the crate. 
 
 ## Contributing and architecture
 
