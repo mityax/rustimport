@@ -80,8 +80,7 @@ class RustImportIPython(Magics):
             key.append(time.time())
 
         module_name = (
-            "_rustimport_jupyter_magic_"
-            + hashlib.sha1(str(key).encode("utf-8")).hexdigest()
+            "_rustimport_magic_" + hashlib.sha1(str(key).encode("utf-8")).hexdigest()
         )
 
         # PyO3 only allows modules to be loaded once. If module name is already in
