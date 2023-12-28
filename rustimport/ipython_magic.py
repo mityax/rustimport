@@ -27,6 +27,7 @@ class RustImportIPython(Magics):
         self._rust_version = subprocess.check_output([rustc, "--version"]).decode(
             "utf8"
         )
+        self._python_version = sys.version_info
         self._rustimport_version = version("rustimport")
 
     def _find_compiled_file(self, module_name, lib_path):
@@ -73,6 +74,7 @@ class RustImportIPython(Magics):
             args.release,
             args.module_path_variable,
             self._rust_version,
+            self._python_version,
             self._rustimport_version,
         ]
         if args.force:
