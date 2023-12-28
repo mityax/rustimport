@@ -3,4 +3,5 @@ pre-commit
 flake8
 isort
 black
+IPython
 pytest  # IPython.testing requires pytest to be installed

@@ -37,7 +37,6 @@ from types import ModuleType
 
 from rustimport import settings
 from rustimport.error_handling import BuildError
-from rustimport.ipython_magic import RustImportIPython
 
 _logger = _logging.getLogger("rustimport")
 
@@ -237,6 +236,8 @@ def load_ipython_extension(ipython):
     if not rustc_is_installed:
         msg = "rustc must be installed to ust rustimport"
         raise OSError(msg)
+
+    from rustimport.ipython_magic import RustImportIPython
 
     ipython.register_magics(RustImportIPython)
 
