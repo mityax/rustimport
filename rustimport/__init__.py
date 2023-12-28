@@ -237,6 +237,7 @@ def load_ipython_extension(ipython):
         msg = "rustc must be installed to ust rustimport"
         raise OSError(msg)
 
+    # Delay import RustImportIPython so that IPython is a soft dependency
     from rustimport.ipython_magic import RustImportIPython
 
     ipython.register_magics(RustImportIPython)
