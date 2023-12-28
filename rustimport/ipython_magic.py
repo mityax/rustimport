@@ -79,6 +79,7 @@ class RustImportIPython(Magics):
             # Add time to key to force the rebuild
             key.append(time.time())
 
+        # Use a smaller hash to prevent Windows issue with long file paths
         hashed_key = hashlib.shake_256(str(key).encode("utf-8")).hexdigest(8)
         module_name = f"_magic_{hashed_key}"
 
