@@ -162,6 +162,34 @@ RUSTIMPORT_RELEASE_BINARIES=true python my_script.py
 
 Take a look at [settings.py](./rustimport/settings.py) for all available environment variables.
 
+## Using in Jupyter
+
+`rustimport` supports compiling code in a Jupyter notebook. To enable this feature load the `rustimport`
+extension from within the Jupyter notebook:
+
+```python
+%load_ext rustimport
+```
+
+Then, prefix a cell with the `%%rustimport` marker to compile it:
+
+```rust
+%%rustimport
+use pyo3::prelude::*;
+
+#[pyfunction]
+fn square(x: i32) -> i32 {
+    x * x
+}
+```
+
+`%%rustimport` supports release mode and force compilation with flags:
+
+```rust
+%%rustimport --release --force
+...
+```
+
 ## Usage in production
 ### 1. Building release binaries
 In production deployments you usually don't want to include the Rust toolchain, all the sources and compile at runtime. Therefore, a simple cli utility for pre-compiling all source files is provided. This utility may, for example, be used in CI/CD pipelines. 

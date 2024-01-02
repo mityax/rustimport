@@ -31,7 +31,7 @@ Hurray, you've called some Rust code from Python using a combination of rustimpo
 For more information check the Readme on GitHub: https://github.com/mityax/rustimport
 """
 
-
+from shutil import which
 import logging as _logging
 from types import ModuleType
 
@@ -202,6 +202,18 @@ def build_all(root_directory, opt_in: bool = True, force_rebuild: bool = setting
         _logger.info(f"Skipped building {len(not_built)} {'extension' if len(not_built) == 1 else 'extensions'} due"
                      f" to unchanged source files. Re-run with `--force-rebuild` to rebuild everything.")
     _logger.info("Completed successfully.")
+
+
+def load_ipython_extension(ipython):
+    rustc_is_installed = which("rustc") is not None
+    if not rustc_is_installed:
+        msg = "rustc must be installed to ust rustimport"
+        raise OSError(msg)
+
+    # Delay import RustImportIPython so that IPython is a soft dependency
+    from rustimport.ipython_magic import RustImportIPython
+
+    ipython.register_magics(RustImportIPython)
 
 
 __all__ = [
