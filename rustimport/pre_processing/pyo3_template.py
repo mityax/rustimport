@@ -6,6 +6,8 @@ from rustimport.pre_processing.base import Template
 
 
 class PyO3Template(Template):
+    PYO3_VERSION = "0.21.2"
+
     def process(self) -> Template.TemplatingResult:
         return Template.TemplatingResult(
             cargo_manifest=self.__generate_manifest(),
@@ -25,7 +27,7 @@ class PyO3Template(Template):
                 'crate-type': ['cdylib'],
             },
             'dependencies': {
-                'pyo3': {'version': '0.18.3', 'features': ['extension-module']}
+                'pyo3': {'version': PyO3Template.PYO3_VERSION, 'features': ['extension-module']}
             }
         })
 
@@ -43,7 +45,7 @@ class PyO3Template(Template):
 
         res = [
             b'#[pymodule]',
-            b'fn ' + self.lib_name.encode() + b'(_py: Python, m: &PyModule) -> PyResult<()> {',
+            b'fn ' + self.lib_name.encode() + b"(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {",
             *[
                 b'  m.add_function(wrap_pyfunction!(' + func.group(1) + b', m)?)?;'
                 for func in functions

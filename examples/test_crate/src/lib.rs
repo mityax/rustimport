@@ -12,7 +12,7 @@ fn say_hello() -> String {
 // #[pyfunction] and all structs annotated with #[pyclass].
 //
 //#[pymodule]
-//fn test_crate(_py: Python, m: &PyModule) -> PyResult<()> {
+//fn test_crate(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 //    m.add_function(wrap_pyfunction!(say_hello, m)?)?;
 //    Ok(())
 //}

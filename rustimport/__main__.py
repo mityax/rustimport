@@ -6,6 +6,7 @@ import sys
 from typing import List
 
 from rustimport import build_all, build_filepath, settings
+from rustimport.pre_processing import PyO3Template
 
 rust_lib_template = """// rustimport:pyo3
 
@@ -21,7 +22,7 @@ fn say_hello() {
 // #[pyfunction] and all structs annotated with #[pyclass].
 //
 //#[pymodule]
-//fn {{EXTENSION_NAME}}(_py: Python, m: &PyModule) -> PyResult<()> {
+//fn {{EXTENSION_NAME}}(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 //    m.add_function(wrap_pyfunction!(say_hello, m)?)?;
 //    Ok(())
 //}
@@ -54,7 +55,7 @@ name = "{{EXTENSION_NAME}}"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.18.3", features = ["extension-module"] }
+pyo3 = { version = "{{PYO3_VERSION}}", features = ["extension-module"] }
 """
 
 
@@ -75,7 +76,9 @@ def create_extension(name: str, cwd: str = '.'):
         with open(os.path.join(src_dir, 'lib.rs'), 'w+') as f:
             f.write(rust_lib_template.replace('{{EXTENSION_NAME}}', name))
         with open(os.path.join(path, 'Cargo.toml'), 'w+') as f:
-            f.write(cargo_toml_template.replace('{{EXTENSION_NAME}}', name))
+            f.write(cargo_toml_template
+                    .replace('{{EXTENSION_NAME}}', name)
+                    .replace('{{PYO3_VERSION}}', PyO3Template.PYO3_VERSION))
         with open(os.path.join(path, '.rustimport'), 'w+') as f:
             f.write("This is a marker-file to make this crate importable by rustimport.")
 

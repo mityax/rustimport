@@ -1,7 +1,7 @@
 # rustimport - Import Rust directly from Python! 
 
 <p align=center>
-    <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.6-green.svg"></a>
+    <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.8-green.svg"></a>
     <a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI version"><img src="https://img.shields.io/pypi/v/rustimport?logo=pypi"></a>
     <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a></a>
 </p>
@@ -93,7 +93,7 @@ features = [ "extension-module",]
 3. It generated a code block exporting your method and appended it to the end of your file:
 ```rust
 #[pymodule]
-fn somecode(_py: Python, m: &PyModule) -> PyResult<()> {
+fn somecode(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
   m.add_function(wrap_pyfunction!(square, m)?)?;
   Ok(())
 }

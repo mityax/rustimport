@@ -25,7 +25,7 @@
 //: # "cdylib" is necessary to produce a shared library for Python to import from.
 //:
 //: [dependencies]
-//: pyo3 = { version = "0.16.2", features = ["extension-module"] }
+//: pyo3 = { version = "0.21.2", features = ["extension-module"] }
 
 use pyo3::prelude::*;
 
@@ -40,7 +40,7 @@ fn sum_as_string(a: usize, b: usize) -> String {
 // The name of this function must match the `lib.name` setting in the cargo manifest,
 // else Python will not be able to import the module.
 #[pymodule]
-fn singlefile(_py: Python, m: &PyModule) -> PyResult<()> {
+fn singlefile(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     Ok(())
 }
