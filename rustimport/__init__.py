@@ -200,7 +200,7 @@ def build_all(root_directory, opt_in: bool = True, force_rebuild: bool = setting
 
     if not_built:
         _logger.info(f"Skipped building {len(not_built)} {'extension' if len(not_built) == 1 else 'extensions'} due"
-                     f" to unchanged source files. Re-run with `--force-rebuild` to rebuild everything.")
+                     f" to unchanged source files. Re-run with `--force` to rebuild everything.")
     _logger.info("Completed successfully.")
 
 
