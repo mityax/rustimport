@@ -97,7 +97,7 @@ def _run_from_commandline(raw_args: List[str]):
 
     build_parser = subparsers.add_parser(
         "build",
-        help="Build one or more cpp source files.",
+        help="Build one or more rust source files or crates.",
     )
     build_parser.add_argument(
         "root",
