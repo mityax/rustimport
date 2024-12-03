@@ -1,12 +1,15 @@
 # rustimport - Import Rust directly from Python! 
 
 <p align=center>
-    <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.8-green.svg"></a>
-    <a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI version"><img src="https://img.shields.io/pypi/v/rustimport?logo=pypi"></a>
-    <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a></a>
+    <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.8-green.svg" /></a>
+    <a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI version"><img src="https://img.shields.io/pypi/v/rustimport?logo=pypi" /></a>
+    <a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI version"><img src="https://img.shields.io/pypi/dm/rustimport" /></a>
+    <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" /></a></a>
 </p>
 
-rustimport was heavily inspired by and is partly based upon [cppimport](https://github.com/tbenthompson/cppimport). Check it out if you're interested in the same functionality for C and C++!
+Arguably the simplest way to use rust from python – no manual compilation step, setup work or binding code required. rustimport provides a simple CLI, makes sure the compiled extension stays up to date with your source code and supports IPython/Jupyter notebooks.
+
+<i>rustimport was heavily inspired by and is partly based upon [cppimport](https://github.com/tbenthompson/cppimport). Check it out if you're interested in similar functionality for C and C++!</i>
 
 ## Installation
 
@@ -39,6 +42,8 @@ Hurray, you've called some Rust code from Python using a combination of `rustimp
 
 This workflow enables you to edit both Rust files and Python and recompilation happens automatically and transparently! It's also handy for quickly whipping together an optimized version of a slow Python function.
 
+## Using the CLI
+
 To easily create a new single-file extension (like above), or a complete crate, use the provided tool:
 ```bash
 $ python3 -m rustimport new my_single_file_extension.rs
@@ -57,6 +62,8 @@ Hello from my_crate, implemented in Rust!
 ```
 
 Smooth!
+
+The CLI can also be used to pre-compile your rust code for production so you don't have to have the rust toolchain on your production environments – see [below](#usage-in-production) for more. 
 
 ## An explanation 
 
