@@ -76,6 +76,27 @@ class TestExamples(unittest.TestCase):
         self.assertGreaterEqual(res, 5)
         self.assertLess(res, 200)  # rust's `Rng::gen_range(a...b)` excludes the upper limit, but includes the lower
 
+    def test_structs(self):
+        from rustimport_examples import structs_and_enums as s  # noqa
+
+        with self.assertRaisesRegex(TypeError, "No constructor defined for MyStruct"):
+            s.MyStruct(5)
+
+        my_other_struct = s.MyOtherStruct(5)
+        self.assertEqual(my_other_struct.get_doubled_value(), 10)
+
+        self.assertEqual(s.MyEnum.A, s.MyEnum.A)
+        self.assertNotEqual(s.MyEnum.A, s.MyEnum.B)
+
+        self.assertEqual(s.MyOtherEnum.B(value=42), s.MyOtherEnum.B(value=42))
+        self.assertNotEqual(s.MyOtherEnum.C("some message"), s.MyOtherEnum.A)
+
+    def test_declarative_module(self):
+        from rustimport_examples import declarative_module  # noqa
+
+        self.assertEqual(declarative_module.say_hello(), "Hello from declarative_module!")
+
+
 
 if __name__ == '__main__':
     unittest.main()

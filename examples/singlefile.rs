@@ -25,7 +25,7 @@
 //: # "cdylib" is necessary to produce a shared library for Python to import from.
 //:
 //: [dependencies]
-//: pyo3 = { version = "0.21.2", features = ["extension-module"] }
+//: pyo3 = { version = "0.23.4", features = ["extension-module"] }
 
 use pyo3::prelude::*;
 

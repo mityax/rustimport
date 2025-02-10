@@ -1,12 +1,12 @@
 import re
 import sys
-from typing import List
+from typing import List, Dict, Any
 
 from rustimport.pre_processing.base import Template
 
 
 class PyO3Template(Template):
-    PYO3_VERSION = "0.21.2"
+    PYO3_VERSION = "0.23.4"
 
     def process(self) -> Template.TemplatingResult:
         return Template.TemplatingResult(
@@ -15,7 +15,7 @@ class PyO3Template(Template):
             additional_cargo_args=self.__get_cargo_args(),
         )
 
-    def __generate_manifest(self) -> bytes:
+    def __generate_manifest(self) -> Dict[str, Any]:
         return self._copy_manifest_with_defaults({
             'package': {
                 'name': self.lib_name,
@@ -32,26 +32,37 @@ class PyO3Template(Template):
         })
 
     def __process_content(self) -> bytes:
-        if not re.search(rb'#\[pymodule]\s*(?:\w\s+)*?fn\s+([\w0-9]+)', self.contents):
+        if not re.search(rb'#\[pymodule]\s*(?:\w\s+)*?(mod|fn)\s+([\w0-9]+)', self.contents):
             # If the file doesn't contain the "pymodule" macro, we generate it automatically
             return self.contents + b"\n\n" + self.__generate_pymodule()
+        return self.contents
 
     def __generate_pymodule(self) -> bytes:
         # A rather rudimentary implementation of generating PyO3 the "pymodule" macro's contents
         functions = re.finditer(
-            rb'#\[pyfunction.*\s*(?:\w+\s+)*?(?:#\[pyo3.*)?\s*(?:\w+\s+)*?fn\s+([\w0-9]+)', self.contents, re.MULTILINE
+            rb'#\[pyfunction.*?]\s*'  # the `#[pyfunction]` macro
+            rb'((#\[.*?]|//[^\n]*?\n|/\*.*?\*/)\s*)*?'  # any other macros (e.g. `#[pyo3(signature = ...)]`) or comments
+            rb'(\w+\s+)*?'  # modifiers such as `pub`
+            rb'fn\s+(?P<name>[\w0-9]+)',  # the function declaration
+            self.contents, re.MULTILINE | re.DOTALL
         )
-        structs = re.finditer(rb'#\[pyclass]\s*(?:\w+\s+)*?(?:struct|enum)\s+([\w0-9]+)', self.contents, re.MULTILINE)
+        structs = re.finditer(
+            rb'#\[pyclass.*?]\s*'  # the `#[pyclass]` macro
+            rb'((#\[.*?]|//[^\n]*?\n|/\*.*?\*/)\s*)*?'  # any other macros (e.g. `#[derive(...)]`) or comments
+            rb'(\w+\s+)*?'  # modifiers such as `pub`
+            rb'(struct|enum)\s+(?P<name>[\w0-9]+)',  # the class/enum declaration
+            self.contents, re.MULTILINE | re.DOTALL
+        )
 
         res = [
             b'#[pymodule]',
             b'fn ' + self.lib_name.encode() + b"(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {",
             *[
-                b'  m.add_function(wrap_pyfunction!(' + func.group(1) + b', m)?)?;'
+                b'  m.add_function(wrap_pyfunction!(' + func.group('name') + b', m)?)?;'
                 for func in functions
             ],
             *[
-                b'  m.add_class::<' + struct.group(1) + b'>()?;'
+                b'  m.add_class::<' + struct.group('name') + b'>()?;'
                 for struct in structs
             ],
             b'  Ok(())',

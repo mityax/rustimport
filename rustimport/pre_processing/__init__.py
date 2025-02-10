@@ -1,6 +1,10 @@
+import copy
+import os.path
 import re
 from dataclasses import dataclass
-from typing import List, Tuple, Optional, Dict, Type
+from typing import List, Tuple, Optional, Dict, Type, Any
+
+import toml
 
 from rustimport.pre_processing.base import merge_cargo_manifests, Template
 from rustimport.pre_processing.pyo3_template import PyO3Template
@@ -23,14 +27,13 @@ class Preprocessor:
         with open(self.path, 'rb') as f:
             contents = f.read()
 
-        manifest, template_name, deps = self.__parse_header(contents)
+        raw_manifest, template_name, deps = self.__parse_header(contents)
+        manifest = toml.loads(raw_manifest.decode())
+        self.__process_manifest(manifest)
 
         if self.cargo_manifest_path is not None:
-            with open(self.cargo_manifest_path, 'rb') as f:
-                if manifest.strip():
-                    manifest = merge_cargo_manifests(f.read(), manifest)
-                else:
-                    manifest = f.read()
+            with open(self.cargo_manifest_path, 'r') as f:
+                manifest = merge_cargo_manifests(toml.load(f), manifest)
 
         if template_name:
             template = all_templates[template_name.lower()](self.path, self.lib_name, contents, manifest)
@@ -38,8 +41,10 @@ class Preprocessor:
         else:
             templating_result = None
 
+        final_manifest = templating_result.cargo_manifest if templating_result else manifest
+
         return self.PreprocessorResult(
-            cargo_manifest=templating_result.cargo_manifest if templating_result else manifest,
+            cargo_manifest=toml.dumps(final_manifest).encode(),
             dependency_file_patterns=deps,
             updated_source=templating_result.contents if templating_result else None,
             additional_cargo_args=templating_result.additional_cargo_args if templating_result else [],
@@ -62,9 +67,49 @@ class Preprocessor:
                 manifest += line[3:].lstrip() + b'\n'
             elif line.startswith(b'//d:'):
                 dependency_file_patterns.append(line[4:].lstrip().decode())
-        return manifest + b'\n', template_name, dependency_file_patterns
+        return manifest, template_name, dependency_file_patterns
+
+    def __process_manifest(self, manifest):
+        # Convert relative dependency paths into absolute ones in the manifest, to make them resolvable
+        # from the temporary location of the module:
+        root = os.path.dirname(self.cargo_manifest_path or self.path)
+        dependency_tables = (
+            *_query_dict('dependencies', manifest),
+            *_query_dict('dev-dependencies', manifest),
+            *_query_dict('build-dependencies', manifest),
+            *_query_dict('target.*.dependencies', manifest),
+            *_query_dict('target.*.dev-dependencies', manifest),
+            *_query_dict('target.*.build-dependencies', manifest),
+        )
+        for deps in dependency_tables:  # walk through all dependency sections in the manifest
+            for spec in deps.values():  # walk through all individual dependency specifications
+                if 'path' in spec:
+                    spec['path'] = os.path.join(root, spec['path'])  # make path absolute if it is not already
+
 
 
 all_templates: Dict[str, Type[Template]] = {
     'pyo3': PyO3Template
 }
+
+
+def _query_dict(query: str, data: dict[str, Any]):
+    """
+    Retrieves values from a nested dictionary using a dot-separated query with '*' as a wildcard.
+    Returns a list of all matching results and an empty list if no matches are found.
+    """
+
+    def search(keys, node):
+        if not keys:
+            return [node]
+
+        key, *rest = keys
+
+        if isinstance(node, dict) and key == '*':
+            return [v for child in node.values() for v in search(rest, child)]
+        elif isinstance(node, dict) and key in node:
+            return search(rest, node[key])
+        return []
+
+    return search(query.split("."), data)
+

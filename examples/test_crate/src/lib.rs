@@ -3,7 +3,7 @@
 use pyo3::prelude::*;
 
 #[pyfunction]
-fn say_hello() -> String {
+pub fn say_hello() -> String {
     "Hello from test_crate, implemented in Rust!".to_string()
 }
 
