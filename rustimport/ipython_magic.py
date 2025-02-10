@@ -1,15 +1,15 @@
 import hashlib
 import importlib.util
-import sys
 import subprocess
+import sys
 import time
 from importlib.machinery import ExtensionFileLoader
+from importlib.metadata import version
 from pathlib import Path
 from shutil import which
 
 from IPython.core import magic_arguments
 from IPython.core.magic import Magics, cell_magic, magics_class
-from importlib.metadata import version
 
 try:
     from IPython.paths import get_ipython_cache_dir

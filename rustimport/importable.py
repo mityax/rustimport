@@ -194,7 +194,12 @@ class CrateImportable(Importable):
         root_path = self.__workspace_path or self.__crate_path
         src_path = os.path.join(self.__crate_path, 'src')
 
-        p = Preprocessor(os.path.join(src_path, 'lib.rs'), lib_name=self.name).process()
+        p = Preprocessor(
+            os.path.join(src_path, 'lib.rs'),
+            lib_name=self.name,
+            cargo_manifest_path=self.__manifest_path,
+            workspace_path=self.__workspace_path,
+        ).process()
 
         return [
             os.path.join(root_path, '**/*.rs'),
@@ -292,13 +297,14 @@ class CrateImportable(Importable):
 
     def _preprocess(self, crate_output_subdirectory: str) -> Preprocessor.PreprocessorResult:
         """
-        Calls [Preprocessor.process()] on the crate, updates the source files
-        with the result and returns the result for further usage.
+        Calls [Preprocessor.process()] on the crate, updates the source files with the result
+        and returns the result for further usage.
         """
         preprocessed = Preprocessor(
             os.path.join(self.__crate_path, 'src/lib.rs'),
             lib_name=self.name,
-            cargo_manifest_path=os.path.join(self.__crate_path, 'Cargo.toml'),
+            cargo_manifest_path=self.__manifest_path,
+            workspace_path=self.__workspace_path,
         ).process()
 
         if preprocessed.updated_source is not None:

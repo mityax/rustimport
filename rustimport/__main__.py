@@ -58,7 +58,7 @@ def create_extension(fn: str, cwd: str = '.'):
     mod_name = os.path.basename(fn)
 
     if not re.match(r'^[a-zA-Z]\w*(\.rs)?$', mod_name):
-        raise ValueError(f"Invalid extension name: {mod_name}. The name may only contain letters (preferably lowercase), "
+        raise ValueError(f"Invalid extension name: \"{mod_name}\". The name may only contain letters (preferably lowercase), "
                          f"numbers and underscores and should start with a letter.")
 
     path = os.path.realpath(os.path.join(cwd, fn))

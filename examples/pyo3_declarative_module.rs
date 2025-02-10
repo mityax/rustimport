@@ -12,7 +12,7 @@ fn say_hello() -> String {
 // Manually define the Python module using pyO3's declarative module syntax:
 
 #[pymodule]
-mod declarative_module {
+mod pyo3_declarative_module {
     #[pymodule_export]
     use super::say_hello; // Exports the `say_hello` function as part of the module
 }

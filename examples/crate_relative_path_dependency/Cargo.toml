@@ -1,0 +1,24 @@
+[package]
+name = "crate_relative_path_dependency"
+version = "0.1.0"
+edition = "2021"
+
+
+# You can safely remove the code below to let rustimport define your pyo3 configuration 
+# automatically. It's still possible to add other configuration or dependencies, or overwrite 
+# specific parts here. rustimport will merge your Cargo.toml file into it's generated default
+# configuration.
+[lib]
+# The name of the native library. This is the name which will be used in Python to import the
+# library (i.e. `import crate_relative_path_dependency`).
+name = "crate_relative_path_dependency"
+
+# "cdylib" is necessary to produce a shared library for Python to import from.
+# Downstream Rust code (including code in `bin/`, `examples/`, and `examples/`) will not be able
+# to `use crate_relative_path_dependency;` unless the "rlib" or "lib" crate type is also included, e.g.:
+# crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.23.4", features = ["extension-module"] }
+test_crate = { path = "../test_crate" }

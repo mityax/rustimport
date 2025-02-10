@@ -17,6 +17,6 @@ fn random_number_from_rust(min: i32, max: i32) -> PyResult<i32> {
     Ok(rand::thread_rng().gen_range(min..max))
 }
 
-// Since we don't write a #[pymodule] macro here manually (see singlefile.rs for an example), the
-// "pyo3" template included in rustimport will automatically generate it for all functions
-// annotated with #[pyfunction] and all structs annotated with #[pyclass].
+// Since we don't write a #[pymodule] macro here manually (see
+// pyo3_manifest_only_templating.rs for an example), the "pyo3" template will automatically generate it for
+// all functions annotated with #[pyfunction] and all structs annotated with #[pyclass].

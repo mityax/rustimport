@@ -11,8 +11,8 @@ pub fn say_hello() -> String {
 // rustimport will generate it for you for all functions annotated with
 // #[pyfunction] and all structs annotated with #[pyclass].
 //
-//#[pymodule]
-//fn test_crate(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
-//    m.add_function(wrap_pyfunction!(say_hello, m)?)?;
-//    Ok(())
-//}
+// #[pymodule]
+// fn test_crate(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+//     m.add_function(wrap_pyfunction!(say_hello, m)?)?;
+//     Ok(())
+// }

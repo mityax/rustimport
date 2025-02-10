@@ -18,7 +18,7 @@ fn try_divide(a: usize, b: usize) -> PyResult<usize> {
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn singlefile_manifest_only_templating(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn pyo3_manifest_only_templating(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(try_divide, m)?)?;
     Ok(())
 }
