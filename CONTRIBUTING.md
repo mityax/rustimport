@@ -18,6 +18,15 @@ To run the tests:
 $ python tests/run_all.py
 ```
 
+## Things to keep in mind
+- Please write your commit messages the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/#examples) 
+  style
+- Before making a commit, please run the tests locally (just do a `python tests/run_all.py`)
+- Add tests for any new features you contribute to ensure they remain functional in the long run
+- If you're not sure whether some contribution is wanted or you need guidance or help in any way to
+  get into the project, please create an issue so we can chat!
+
+
 # Architecture
 
 ## Entrypoints:
@@ -43,14 +52,6 @@ They all offer some customization via their keyword arguments.
 4. Next, we use cargo to build the Rust extension using `rustimport.compiler.Cargo().build(...)`. This function calls the cargo binary with the appropriate arguments to build the extension in place next to the Rust file or crate in the directory tree.
 5. Next, we call `rustimport.checksum.save_checksum(...)` to add a hash of the appended contents of all tracked dependency files. This checksum is appended to the end of the `.so` or `.dylib` file. This seems legal according to specifications and, in practice, causes no problems.
 6. Finally, the compiled and loaded extension module is returned to the user.
-
-## Things to keep in mind
-- Please write your commit messages the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/#examples) 
-  style
-- Before making a commit, please run the tests locally (just do a `python tests/run_all.py`)
-- Add tests for any new features you contribute to ensure they remain functional in the long run
-- If you're not sure whether some contribution is wanted or you need guidance or help in any way to
-  get into the project, please create an issue so we can chat!
 
 ## Useful links
 
