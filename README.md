@@ -1,9 +1,9 @@
 # rustimport - Import Rust directly from Python! 
 
 <p align=center>
-    <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.8-green.svg" /></a>
+    <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.8-blue.svg" /></a>
     <a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI version"><img src="https://img.shields.io/pypi/v/rustimport?logo=pypi" /></a>
-    <a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI version"><img src="https://img.shields.io/pypi/dm/rustimport" /></a>
+    <a target="_blank" href="https://pypi.org/project/rustimport/" title="PyPI downloads"><img src="https://static.pepy.tech/badge/rustimport/month" /></a>
     <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" /></a></a>
 </p>
 
