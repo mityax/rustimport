@@ -7,9 +7,9 @@
     <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" /></a></a>
 </p>
 
-Arguably the simplest way to use rust from python – no manual compilation step, setup work or binding code required. rustimport provides a simple CLI, makes sure the compiled extension stays up to date with your source code and supports IPython/Jupyter notebooks.
+Arguably the simplest way to use rust from python – no manual compilation step, setup work or binding code required. `rustimport` provides a simple CLI, makes sure the compiled extension stays up to date with your source code and supports IPython/Jupyter notebooks.
 
-<i>rustimport was heavily inspired by and is partly based upon [cppimport](https://github.com/tbenthompson/cppimport). Check it out if you're interested in similar functionality for C and C++!</i>
+<i>`rustimport` was heavily inspired by and is partly based upon [cppimport](https://github.com/tbenthompson/cppimport). Check it out if you're interested in similar functionality for C and C++!</i>
 
 ## Installation
 
@@ -76,10 +76,10 @@ The bulk of the file is a generic, simple [pyo3](https://github.com/PyO3/pyo3) e
 
 ## Templating & Pre-Processing
 
-rustimport offers several layers of customization. This is archieved through a simple pre-processor and templates (well, the only existing template at the moment is `pyo3` - pull requests welcome :D).
+`rustimport` offers several layers of customization. This is archieved through a simple pre-processor and templates (well, the only existing template at the moment is `pyo3` - pull requests welcome :D).
 
 ### What rustimport did for you in the background
-The first example in this Readme is the simplest possible form of using rustimport. You just tell rustimport to use the `pyo3` template by writing `rustimport:pyo3` in the first line, and define a function annotated with `pyo3`'s `#[pyfunction]` macro. In the background, rustimport handled a lot of stuff for you:
+The first example in this Readme is the simplest possible form of using `rustimport`. You just tell `rustimport` to use the `pyo3` template by writing `rustimport:pyo3` in the first line, and define a function annotated with `pyo3`'s `#[pyfunction]` macro. In the background, `rustimport` handled a lot of stuff for you:
 
 1. It set up a minimalistic folder structure for a rust crate with your source code in a temporary location.
 2. It generated a Cargo.toml file with the basic configuration for pyo3 and your extension:
@@ -107,7 +107,7 @@ fn somecode(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 ```
 
 ### Customizing an extension
-You can do all the above yourself. rustimport will detect that and only fill in the missing parts to make your extension work.
+You can do all the above yourself. `rustimport` will detect that and only fill in the missing parts to make your extension work.
 
 #### 1. Extending `Cargo.toml`
 For example, to add additional contents to the generated `Cargo.toml` file, use the special `//:` comment syntax at the top of your `.rs` file:
@@ -138,7 +138,7 @@ To track additional files for changes, use the special `//d:` comment syntax:
 
 // --snip--
 ```
-rustimport will now track files matching these patterns too and re-compiles your extension if any of them changes.
+`rustimport` will now track files matching these patterns too and re-compiles your extension if any of them changes.
 
 #### 3. Full customization for more control
 If you write a more complex extension, it's preferrable to just create a normal Rust crate:
@@ -152,10 +152,10 @@ my_crate
     └── lib.rs
 ```
 
-The crate contains all necessary configuration to be directly be imported by rustimport and also some additional explanations on how to configure manually.
+The crate contains all necessary configuration to be directly be imported by `rustimport` and also some additional explanations on how to configure manually.
 
 ## Using environment variables
-rustimport exposed most of it's settings via environment variables. This can be pretty handy in development but also in production environments.
+`rustimport` exposes most of it's settings via environment variables. This can be pretty handy in development but also in production environments.
 
 For example, to force recompilation, just run your script like this:
 ```commandline
